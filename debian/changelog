@@ -1,3 +1,58 @@
+gettext (0.18.1.1-9) unstable; urgency=low
+
+  * Build with hardened build flags.
+  * Use Breaks instead of Conflicts for autopoint (lintian warning).
+  * Use $(STRIP) on ELF binaries. not just on libraries.
+
+ -- Santiago Vila <sanvila@debian.org>  Thu, 07 Jun 2012 12:08:00 +0200
+
+gettext (0.18.1.1-8) unstable; urgency=low
+
+  * Modified msgfmt to always create little endian .mo files.
+    Thanks a lot to Steve Langasek. Closes: #671257.
+  * Updated config.guess and config.sub.
+
+ -- Santiago Vila <sanvila@debian.org>  Wed, 16 May 2012 13:54:32 +0200
+
+gettext (0.18.1.1-7) unstable; urgency=low
+
+  * Create symlinks required by new emacs policy using "ln -sf".
+    Thanks to Agustín Martín. Closes: #671353.
+
+ -- Santiago Vila <sanvila@debian.org>  Fri, 04 May 2012 18:35:31 +0200
+
+gettext (0.18.1.1-6) unstable; urgency=low
+
+  * Run dpkg-shlibdeps on libraries, as it should be. Closes: #670588.
+    This makes --no-as-needed not required after all. Closes: #604778.
+  * Put symlinks to .el files where emacs can find them, following
+    the latest emacs policy. Closes: #664551.
+  * Changed project-id to use quotes around pwd. Closes: #654779.
+  * Split out libgettextpo0 for multiarch. Closes: #646034.
+    Thanks a lot to Steve Langasek.
+  * Split out libasprintf0c2 as well. For now, gettext-base depends
+    on libasprintf0c2 so that it's not missed on upgrades, for this reason
+    this library is Priority: standard as well. After the release of wheezy
+    we can think about this again.
+  * Dropped README.Debian, no longer needed.
+
+ -- Santiago Vila <sanvila@debian.org>  Sat, 28 Apr 2012 18:40:40 +0200
+
+gettext (0.18.1.1-5) unstable; urgency=low
+
+  * Applied patch by Bruno Haible to teach xgettext about new scheme
+    syntax. Reported by David Pirotte. Closes: #641371.
+
+ -- Santiago Vila <sanvila@debian.org>  Wed, 05 Oct 2011 15:19:00 +0200
+
+gettext (0.18.1.1-4) unstable; urgency=low
+
+  * Applied patch by Bruno Haible to fix xgettext crash when extracting
+    a message with plural that is excluded. Closes: #608181.
+  * Dropped obsolete -D_REENTRANT. Use --enable-threads instead.
+
+ -- Santiago Vila <sanvila@debian.org>  Fri, 05 Aug 2011 15:47:34 +0200
+
 gettext (0.18.1.1-3) unstable; urgency=high
 
   * Do not include /usr/share/info/dir.gz file in binary package if

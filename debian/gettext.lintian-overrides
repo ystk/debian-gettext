@@ -15,7 +15,9 @@ gettext: non-dev-pkg-with-shlib-symlink usr/lib/libgettextpo.so.0.5.1 usr/lib/li
 gettext: shlib-missing-in-control-file libgettextsrc 0.18.1 for usr/lib/libgettextsrc-0.18.1.so
 gettext: shlib-missing-in-control-file libgettextlib 0.18.1 for usr/lib/libgettextlib-0.18.1.so
 #
-# Only libgettextpo0 is to be used by other packages.
-# gettext Provides libgettextpo0, so yes, it's correct.
+# Not for use by other packages.
 #
-gettext: package-name-doesnt-match-sonames libgettextlib-0.18.1 libgettextpo0 libgettextsrc-0.18.1 libgnuintl8
+gettext: package-name-doesnt-match-sonames libgettextlib-0.18.1 libgettextsrc-0.18.1 libgnuintl8
+gettext: no-shlibs-control-file usr/lib/preloadable_libintl.so
+gettext: no-shlibs-control-file usr/lib/libgettextsrc-0.18.1.so
+gettext: no-shlibs-control-file usr/lib/libgettextlib-0.18.1.so

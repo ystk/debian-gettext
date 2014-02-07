@@ -1,3 +1,8 @@
+From: Santiago Vila <sanvila@debian.org>
+Subject: Modified several Makefile.in files to avoid /usr/share/info/dir.gz
+Bug-Debian: http://bugs.debian.org/597407
+X-Debian-version: 0.18.1.1-3
+
 --- a/gettext-runtime/libasprintf/Makefile.in
 +++ b/gettext-runtime/libasprintf/Makefile.in
 @@ -1042,8 +1042,7 @@

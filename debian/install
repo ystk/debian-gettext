@@ -13,12 +13,13 @@ if [ ${FLAVOR} != emacs ]; then
   echo install/${PACKAGE}: Byte-compiling for ${FLAVOR}
 
   install -m 755 -d ${ELCDIR}
-  cd ${ELDIR}
-  cp ${files} ${ELCDIR}
   cd ${ELCDIR}
+  for f in ${files}; do
+    ln -sf ../../../emacs/site-lisp/${PACKAGE}/${f} .
+  done
   cat << EOF > path.el
 (setq load-path (cons "." load-path) byte-compile-warnings nil)
 EOF
   ${FLAVOR} ${flags} ${files}
-  rm -f *.el path.el
+  rm -f path.el
 fi

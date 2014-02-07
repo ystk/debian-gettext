@@ -2,7 +2,7 @@ Source: gettext
 Section: devel
 Priority: optional
 Maintainer: Santiago Vila <sanvila@debian.org>
-Standards-Version: 3.8.4
+Standards-Version: 3.9.1
 Build-Depends: libexpat1-dev, fastjar, default-jdk, file, libncurses5-dev, libxml2-dev, libglib2.0-dev, libcroco3-dev, git (>= 1:1.7.0.5), libunistring-dev
 Homepage: http://www.gnu.org/software/gettext/
 
@@ -10,19 +10,18 @@ Package: gettext-base
 Section: utils
 Priority: standard
 Architecture: any
-Depends: ${shlibs:Depends}
-Provides: libasprintf0c2
+Depends: ${shlibs:Depends}, libasprintf0c2 (>= 0.18.1.1-6)
 Description: GNU Internationalization utilities for the base system
  This package includes the gettext and ngettext programs which allow
  other packages to internationalize the messages given by shell scripts.
 
 Package: gettext
 Architecture: any
-Depends: ${shlibs:Depends}, gettext-base, dpkg (>= 1.15.4) | install-info
+Depends: ${shlibs:Depends}, libgettextpo0 (= ${binary:Version}), libasprintf0c2 (= ${binary:Version}), gettext-base, dpkg (>= 1.15.4) | install-info
 Recommends: curl | wget | lynx-cur, autopoint
-Conflicts: autopoint (<= 0.17-11)
+Breaks: autopoint (<= 0.17-11)
 Suggests: gettext-doc
-Provides: libgettextpo0, libasprintf-dev, libgettextpo-dev
+Provides: libasprintf-dev, libgettextpo-dev
 Description: GNU Internationalization utilities
  Interesting for authors or maintainers of other packages or programs
  which they want to see internationalized.
@@ -55,3 +54,30 @@ Description: The autopoint program from GNU gettext
  `configure.in' or `configure.ac' file, the gettext version used by the
  package, and copies the infrastructure files belonging to this version
  into the package.
+
+Package: libgettextpo0
+Section: libs
+Priority: optional
+Architecture: any
+Multi-Arch: same
+Pre-Depends: multiarch-support
+Depends: ${shlibs:Depends}
+Breaks: gettext (<< 0.18.1.1-6)
+Replaces: gettext (<< 0.18.1.1-6)
+Description: GNU Internationalization library
+ This package contains the libgettextpo shared library for interfacing
+ programmatically with GNU gettext .po files.
+
+Package: libasprintf0c2
+Section: libs
+Priority: standard
+Architecture: any
+Multi-Arch: same
+Pre-Depends: multiarch-support
+Depends: ${shlibs:Depends}
+Breaks: gettext-base (<< 0.18.1.1-6)
+Replaces: gettext-base (<< 0.18.1.1-6)
+Description: GNU library to use fprintf and friends in C++
+ This package contains the libasprintf shared library which makes the
+ C formatted output routines (fprintf et al.) usable in C++ programs,
+ for use with the <string> strings and the <iostream> streams.
