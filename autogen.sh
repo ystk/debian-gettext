@@ -1,22 +1,5 @@
 #!/bin/sh
-# Convenience script for regenerating all autogeneratable files that are
-# omitted from the version control repository. In particular, this script
-# also regenerates all aclocal.m4, config.h.in, Makefile.in, configure files
-# with new versions of autoconf or automake.
-#
-# This script requires autoconf-2.60..2.65 and automake-1.11.1 in the PATH.
-# It also requires either
-#   - the GNULIB_TOOL environment variable pointing to the gnulib-tool script
-#     in a gnulib checkout, or
-#   - the git program in the PATH and an internet connection.
-# It also requires
-#   - the bison program,
-#   - the gperf program,
-#   - the groff program,
-#   - the makeinfo program from the texinfo package,
-#   - perl.
-
-# Copyright (C) 2003-2010 Free Software Foundation, Inc.
+# Copyright (C) 2003-2014 Free Software Foundation, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,51 +14,116 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Usage: ./autogen.sh [--quick] [--skip-gnulib]
+# This script populates the build infrastructure in the source tree
+# checked-out from VCS.
 #
-# Usage after a first-time git clone / cvs checkout:   ./autogen.sh
-# Usage after a git clone / cvs update:                ./autogen.sh --quick
-# This uses an up-to-date gnulib checkout.
-# (The gettext-0.18.1 release was prepared using gnulib commit
-# 74d509383fe30bb5511a978b52e4f8ecae37826b from 2010-06-03.)
+# This script requires:
+#   - Autoconf
+#   - Automake
+#   - Wget
+#   - Git
+#   - XZ Utils
 #
-# Usage from a released tarball:             ./autogen.sh --quick --skip-gnulib
+# By default, it fetches Gnulib as a git submodule.  If you already
+# have a local copy of Gnulib, you can avoid extra network traffic by
+# setting the GNULIB_SRCDIR environment variable pointing to the path.
+#
+# In addition, it fetches the archive.dir.tar.gz file, which contains
+# data files used by the autopoint program.  If you already have the
+# file, place it under gettext-tools/misc, before running this script.
+#
+# Usage: ./autogen.sh [--skip-gnulib]
+#
+# Usage after a git clone:              ./autogen.sh
+# Usage from a released tarball:        ./autogen.sh --skip-gnulib
 # This does not use a gnulib checkout.
 
-quick=false
+# Nuisances.
+(unset CDPATH) >/dev/null 2>&1 && unset CDPATH
+
 skip_gnulib=false
 while :; do
   case "$1" in
-    --quick) quick=true; shift;;
     --skip-gnulib) skip_gnulib=true; shift;;
     *) break ;;
   esac
 done
 
+cleanup_gnulib() {
+  status=$?
+  rm -fr "$gnulib_path"
+  exit $status
+}
+
+git_modules_config () {
+  test -f .gitmodules && git config --file .gitmodules "$@"
+}
+
+gnulib_path=$(git_modules_config submodule.gnulib.path)
+test -z "$gnulib_path" && gnulib_path=gnulib
+
 # The tests in gettext-tools/tests are not meant to be executable, because
 # they have a TESTS_ENVIRONMENT that specifies the shell explicitly.
 
 if ! $skip_gnulib; then
-  if test -z "$GNULIB_TOOL"; then
-    # Check out gnulib in a subdirectory 'gnulib'.
-    if test -d gnulib; then
-      (cd gnulib && git pull)
-    else
-      git clone git://git.savannah.gnu.org/gnulib.git
+  # Get gnulib files.
+  case ${GNULIB_SRCDIR--} in
+  -)
+    if git_modules_config submodule.gnulib.url >/dev/null; then
+      echo "$0: getting gnulib files..."
+      git submodule init || exit $?
+      git submodule update || exit $?
+
+    elif [ ! -d "$gnulib_path" ]; then
+      echo "$0: getting gnulib files..."
+
+      trap cleanup_gnulib 1 2 13 15
+
+      shallow=
+      git clone -h 2>&1 | grep -- --depth > /dev/null && shallow='--depth 2'
+      git clone $shallow git://git.sv.gnu.org/gnulib "$gnulib_path" ||
+        cleanup_gnulib
+
+      trap - 1 2 13 15
     fi
-    # Now it should contain a gnulib-tool.
-    if test -f gnulib/gnulib-tool; then
-      GNULIB_TOOL=`pwd`/gnulib/gnulib-tool
-    else
-      echo "** warning: gnulib-tool not found" 1>&2
+    GNULIB_SRCDIR=$gnulib_path
+    ;;
+  *)
+    # Use GNULIB_SRCDIR as a reference.
+    if test -d "$GNULIB_SRCDIR"/.git && \
+          git_modules_config submodule.gnulib.url >/dev/null; then
+      echo "$0: getting gnulib files..."
+      if git submodule -h|grep -- --reference > /dev/null; then
+        # Prefer the one-liner available in git 1.6.4 or newer.
+        git submodule update --init --reference "$GNULIB_SRCDIR" \
+          "$gnulib_path" || exit $?
+      else
+        # This fallback allows at least git 1.5.5.
+        if test -f "$gnulib_path"/gnulib-tool; then
+          # Since file already exists, assume submodule init already complete.
+          git submodule update || exit $?
+        else
+          # Older git can't clone into an empty directory.
+          rmdir "$gnulib_path" 2>/dev/null
+          git clone --reference "$GNULIB_SRCDIR" \
+            "$(git_modules_config submodule.gnulib.url)" "$gnulib_path" \
+            && git submodule init && git submodule update \
+            || exit $?
+        fi
+      fi
+      GNULIB_SRCDIR=$gnulib_path
     fi
+    ;;
+  esac
+  # Now it should contain a gnulib-tool.
+  if test -f "$GNULIB_SRCDIR"/gnulib-tool; then
+    GNULIB_TOOL="$GNULIB_SRCDIR"/gnulib-tool
+  else
+    echo "** warning: gnulib-tool not found" 1>&2
   fi
   # Skip the gnulib-tool step if gnulib-tool was not found.
   if test -n "$GNULIB_TOOL"; then
     # In gettext-runtime:
-    if test -f gettext-runtime/gnulib-m4/gnulib-cache.m4; then
-      mv -f gettext-runtime/gnulib-m4/gnulib-cache.m4 gettext-runtime/gnulib-m4/gnulib-cache.m4~
-    fi
     GNULIB_MODULES_RUNTIME_FOR_SRC='
       atexit
       basename
@@ -88,6 +136,7 @@ if ! $skip_gnulib; then
       progname
       propername
       relocatable-prog
+      setlocale
       sigpipe
       stdbool
       stdio
@@ -98,28 +147,26 @@ if ! $skip_gnulib; then
     '
     GNULIB_MODULES_RUNTIME_OTHER='
       gettext-runtime-misc
+      ansi-c++-opt
       csharpcomp-script
       java
       javacomp-script
     '
     $GNULIB_TOOL --dir=gettext-runtime --lib=libgrt --source-base=gnulib-lib --m4-base=gnulib-m4 --no-libtool --local-dir=gnulib-local --local-symlink \
-      --import $GNULIB_MODULES_RUNTIME_FOR_SRC $GNULIB_MODULES_RUNTIME_OTHER
+      --import $GNULIB_MODULES_RUNTIME_FOR_SRC $GNULIB_MODULES_RUNTIME_OTHER || exit $?
     # In gettext-runtime/libasprintf:
-    if test -f gettext-runtime/libasprintf/gnulib-m4/gnulib-cache.m4; then
-      mv -f gettext-runtime/libasprintf/gnulib-m4/gnulib-cache.m4 gettext-runtime/libasprintf/gnulib-m4/gnulib-cache.m4~
-    fi
     GNULIB_MODULES_LIBASPRINTF='
       alloca
       errno
+      verify
+      xsize
     '
     GNULIB_MODULES_LIBASPRINTF_OTHER='
     '
     $GNULIB_TOOL --dir=gettext-runtime/libasprintf --source-base=. --m4-base=gnulib-m4 --lgpl=2 --makefile-name=Makefile.gnulib --libtool --local-dir=gnulib-local --local-symlink \
-      --import $GNULIB_MODULES_LIBASPRINTF $GNULIB_MODULES_LIBASPRINTF_OTHER
+      --import $GNULIB_MODULES_LIBASPRINTF $GNULIB_MODULES_LIBASPRINTF_OTHER || exit $?
+    $GNULIB_TOOL --copy-file m4/intmax_t.m4 gettext-runtime/libasprintf/gnulib-m4/intmax_t.m4 || exit $?
     # In gettext-tools:
-    if test -f gettext-tools/gnulib-m4/gnulib-cache.m4; then
-      mv -f gettext-tools/gnulib-m4/gnulib-cache.m4 gettext-tools/gnulib-m4/gnulib-cache.m4~
-    fi
     GNULIB_MODULES_TOOLS_FOR_SRC='
       alloca-opt
       atexit
@@ -133,6 +180,7 @@ if ! $skip_gnulib; then
       c-strcasestr
       c-strstr
       clean-temp
+      closedir
       closeout
       copy-file
       csharpcomp
@@ -168,17 +216,20 @@ if ! $skip_gnulib; then
       minmax
       obstack
       open
+      opendir
       openmp
       ostream
-      pipe
       pipe-filter-ii
       progname
       propername
+      readdir
       relocatable-prog
       relocatable-script
+      setlocale
       sh-quote
       sigpipe
       sigprocmask
+      spawn-pipe
       stdbool
       stdio
       stdlib
@@ -198,6 +249,7 @@ if ! $skip_gnulib; then
       uniname/uniname
       unistd
       unistr/u8-mbtouc
+      unistr/u8-mbtoucr
       unistr/u8-uctomb
       unistr/u16-mbtouc
       uniwidth/width
@@ -217,16 +269,18 @@ if ! $skip_gnulib; then
     # Common dependencies of GNULIB_MODULES_TOOLS_FOR_SRC and GNULIB_MODULES_TOOLS_FOR_LIBGREP.
     GNULIB_MODULES_TOOLS_FOR_SRC_COMMON_DEPENDENCIES='
       alloca-opt
-      arg-nonnull
-      c++defs
       extensions
       gettext-h
       include_next
+      locale
       localcharset
       malloc-posix
       mbrtowc
       mbsinit
       multiarch
+      snippet/arg-nonnull
+      snippet/c++defs
+      snippet/warn-on-use
       ssize_t
       stdbool
       stddef
@@ -235,12 +289,12 @@ if ! $skip_gnulib; then
       streq
       unistd
       verify
-      warn-on-use
       wchar
-      wctype
+      wctype-h
     '
     GNULIB_MODULES_TOOLS_OTHER='
       gettext-tools-misc
+      ansi-c++-opt
       csharpcomp-script
       csharpexec-script
       gcj
@@ -249,24 +303,27 @@ if ! $skip_gnulib; then
       javaexec-script
       stdint
     '
+    GNULIB_MODULES_TOOLS_LIBUNISTRING_TESTS='
+      unilbrk/u8-possible-linebreaks-tests
+      unilbrk/ulc-width-linebreaks-tests
+      unistr/u8-mbtouc-tests
+      unistr/u8-mbtouc-unsafe-tests
+      uniwidth/width-tests
+    '
     $GNULIB_TOOL --dir=gettext-tools --lib=libgettextlib --source-base=gnulib-lib --m4-base=gnulib-m4 --tests-base=gnulib-tests --makefile-name=Makefile.gnulib --libtool --with-tests --local-dir=gnulib-local --local-symlink \
-      --import --avoid=hash-tests $GNULIB_MODULES_TOOLS_FOR_SRC $GNULIB_MODULES_TOOLS_FOR_SRC_COMMON_DEPENDENCIES $GNULIB_MODULES_TOOLS_OTHER
+      --import --avoid=hash-tests `for m in $GNULIB_MODULES_TOOLS_LIBUNISTRING_TESTS; do echo --avoid=$m; done` $GNULIB_MODULES_TOOLS_FOR_SRC $GNULIB_MODULES_TOOLS_FOR_SRC_COMMON_DEPENDENCIES $GNULIB_MODULES_TOOLS_OTHER || exit $?
     # In gettext-tools/libgrep:
-    if test -f gettext-tools/libgrep/gnulib-m4/gnulib-cache.m4; then
-      mv -f gettext-tools/libgrep/gnulib-m4/gnulib-cache.m4 gettext-tools/libgrep/gnulib-m4/gnulib-cache.m4~
-    fi
     GNULIB_MODULES_TOOLS_FOR_LIBGREP='
+      mbrlen
       regex
     '
-    $GNULIB_TOOL --dir=gettext-tools --macro-prefix=grgl --lib=libgrep --source-base=libgrep --m4-base=libgrep/gnulib-m4 --makefile-name=Makefile.gnulib --local-dir=gnulib-local --local-symlink \
-      --import `for m in $GNULIB_MODULES_TOOLS_FOR_SRC_COMMON_DEPENDENCIES; do if test \`$GNULIB_TOOL --extract-applicability $m\` != all; then echo --avoid=$m; fi; done` $GNULIB_MODULES_TOOLS_FOR_LIBGREP
+    $GNULIB_TOOL --dir=gettext-tools --macro-prefix=grgl --lib=libgrep --source-base=libgrep --m4-base=libgrep/gnulib-m4 --witness-c-macro=IN_GETTEXT_TOOLS_LIBGREP --makefile-name=Makefile.gnulib --local-dir=gnulib-local --local-symlink \
+      --import `for m in $GNULIB_MODULES_TOOLS_FOR_SRC_COMMON_DEPENDENCIES; do if test \`$GNULIB_TOOL --extract-applicability $m\` != all; then echo --avoid=$m; fi; done` $GNULIB_MODULES_TOOLS_FOR_LIBGREP || exit $?
     # In gettext-tools/libgettextpo:
-    if test -f gettext-tools/libgettextpo/gnulib-m4/gnulib-cache.m4; then
-      mv -f gettext-tools/libgettextpo/gnulib-m4/gnulib-cache.m4 gettext-tools/libgettextpo/gnulib-m4/gnulib-cache.m4~
-    fi
     # This is a subset of the GNULIB_MODULES_FOR_SRC.
     GNULIB_MODULES_LIBGETTEXTPO='
       basename
+      close
       c-ctype
       c-strcase
       c-strstr
@@ -292,9 +349,11 @@ if ! $skip_gnulib; then
       stdbool
       stdio
       stdlib
+      strchrnul
       strerror
       unilbrk/ulc-width-linebreaks
       unistr/u8-mbtouc
+      unistr/u8-mbtoucr
       unistr/u8-uctomb
       unistr/u16-mbtouc
       uniwidth/width
@@ -310,75 +369,91 @@ if ! $skip_gnulib; then
     GNULIB_MODULES_LIBGETTEXTPO_OTHER='
     '
     $GNULIB_TOOL --dir=gettext-tools --source-base=libgettextpo --m4-base=libgettextpo/gnulib-m4 --macro-prefix=gtpo --makefile-name=Makefile.gnulib --libtool --local-dir=gnulib-local --local-symlink \
-      --import $GNULIB_MODULES_LIBGETTEXTPO $GNULIB_MODULES_LIBGETTEXTPO_OTHER
+      --import $GNULIB_MODULES_LIBGETTEXTPO $GNULIB_MODULES_LIBGETTEXTPO_OTHER || exit $?
+    # Import build tools.  We use --copy-file to avoid directory creation.
+    $GNULIB_TOOL --copy-file tests/init.sh gettext-tools || exit $?
+    $GNULIB_TOOL --copy-file build-aux/git-version-gen || exit $?
   fi
 fi
 
 # Fetch config.guess, config.sub.
 if test -n "$GNULIB_TOOL"; then
   for file in config.guess config.sub; do
-    $GNULIB_TOOL --copy-file build-aux/$file; chmod a+x build-aux/$file
+    $GNULIB_TOOL --copy-file build-aux/$file; chmod a+x build-aux/$file || exit $?
   done
 else
   for file in config.guess config.sub; do
+    echo "$0: getting $file..."
     wget -q --timeout=5 -O build-aux/$file.tmp "http://git.savannah.gnu.org/gitweb/?p=gnulib.git;a=blob_plain;f=build-aux/${file};hb=HEAD" \
       && mv build-aux/$file.tmp build-aux/$file \
       && chmod a+x build-aux/$file
+    retval=$?
+    rm -f build-aux/$file.tmp
+    test $retval -eq 0 || exit $retval
   done
 fi
 
+# Fetch gettext-tools/misc/archive.dir.tar.
+if ! test -f gettext-tools/misc/archive.dir.tar; then
+  if ! test -f gettext-tools/misc/archive.dir.tar.xz; then
+    echo "$0: getting gettext-tools/misc/archive.dir.tar..."
+    wget -q --timeout=5 -O gettext-tools/misc/archive.dir.tar.xz-t "ftp://alpha.gnu.org/gnu/gettext/archive.dir-latest.tar.xz" \
+      && mv gettext-tools/misc/archive.dir.tar.xz-t gettext-tools/misc/archive.dir.tar.xz
+    retval=$?
+    rm -f gettext-tools/misc/archive.dir.tar.xz-t
+    test $retval -eq 0 || exit $retval
+  fi
+  xz -d -c < gettext-tools/misc/archive.dir.tar.xz > gettext-tools/misc/archive.dir.tar-t \
+    && mv gettext-tools/misc/archive.dir.tar-t gettext-tools/misc/archive.dir.tar
+  retval=$?
+  rm -f gettext-tools/misc/archive.dir.tar-t
+  test $retval -eq 0 || exit $retval
+fi
+
+# Generate configure script in each subdirectories.
 (cd gettext-runtime/libasprintf
- ../../build-aux/fixaclocal aclocal -I ../../m4 -I ../m4 -I gnulib-m4
+ echo "$0: generating configure in gettext-runtime/libasprintf..."
+ aclocal -I ../../m4 -I ../m4 -I gnulib-m4
  autoconf
  autoheader && touch config.h.in
  automake --add-missing --copy
 )
 
 (cd gettext-runtime
- ../build-aux/fixaclocal aclocal -I m4 -I ../m4 -I gnulib-m4
+ echo "$0: geneating configure in gettext-runtime..."
+ aclocal -I m4 -I ../m4 -I gnulib-m4
  autoconf
  autoheader && touch config.h.in
  automake --add-missing --copy
- # Rebuilding the PO files and manual pages is only rarely needed.
- if ! $quick; then
-   ./configure --disable-java --disable-native-java --disable-csharp \
-     && (cd po && make update-po) \
-     && (cd intl && make) && (cd gnulib-lib && make) && (cd src && make) \
-     && (cd man && make update-man1 all) \
-     && make distclean
- fi
 )
-
-cp -p gettext-runtime/ABOUT-NLS gettext-tools/ABOUT-NLS
 
 (cd gettext-tools/examples
- ../../build-aux/fixaclocal aclocal -I ../../gettext-runtime/m4 -I ../../m4
+ echo "$0: geneating configure in gettext-tools/examples..."
+ aclocal -I ../../gettext-runtime/m4 -I ../../m4
  autoconf
  automake --add-missing --copy
- # Rebuilding the examples PO files is only rarely needed.
- if ! $quick; then
-   ./configure && (cd po && make update-po) && make distclean
- fi
 )
 
+echo "$0: copying common files from gettext-runtime to gettext-tools..."
+cp -p gettext-runtime/ABOUT-NLS gettext-tools/ABOUT-NLS
+cp -p gettext-runtime/po/Makefile.in.in gettext-tools/po/Makefile.in.in
+cp -p gettext-runtime/po/Rules-quot gettext-tools/po/Rules-quot
+cp -p gettext-runtime/po/boldquot.sed gettext-tools/po/boldquot.sed
+cp -p gettext-runtime/po/quot.sed gettext-tools/po/quot.sed
+cp -p gettext-runtime/po/en@quot.header gettext-tools/po/en@quot.header
+cp -p gettext-runtime/po/en@boldquot.header gettext-tools/po/en@boldquot.header
+cp -p gettext-runtime/po/insert-header.sin gettext-tools/po/insert-header.sin
+cp -p gettext-runtime/po/remove-potcdate.sin gettext-tools/po/remove-potcdate.sin
+
 (cd gettext-tools
- ../build-aux/fixaclocal aclocal -I m4 -I ../gettext-runtime/m4 -I ../m4 -I gnulib-m4 -I libgrep/gnulib-m4 -I libgettextpo/gnulib-m4
+ echo "$0: geneating configure in gettext-tools..."
+ aclocal -I m4 -I ../gettext-runtime/m4 -I ../m4 -I gnulib-m4 -I libgrep/gnulib-m4 -I libgettextpo/gnulib-m4
  autoconf
  autoheader && touch config.h.in
  test -d intl || mkdir intl
  automake --add-missing --copy
- # Rebuilding the PO files, manual pages, documentation, test files is only rarely needed.
- if ! $quick; then
-   ./configure --disable-java --disable-native-java --disable-csharp --disable-openmp \
-     && (cd po && make update-po) \
-     && (cd intl && make) && (cd gnulib-lib && make) && (cd libgrep && make) && (cd src && make) \
-     && (cd man && make update-man1 all) \
-     && (cd doc && make all) \
-     && (cd tests && make update-expected) \
-     && make distclean
- fi
 )
 
-build-aux/fixaclocal aclocal -I m4
+aclocal -I m4
 autoconf
 automake

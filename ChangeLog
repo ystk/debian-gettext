@@ -1,3 +1,396 @@
+2014-07-14  Daiki Ueno  <ueno@gnu.org>
+
+	* gettext 0.19.2 released.
+
+2014-07-14  Daiki Ueno  <ueno@gnu.org>
+
+	build: Work around undefined _GL_ATTRIBUTE_PURE in libintl
+	* Makefile.am (distcheck-hook): Ignore the difference between our
+	localename.c and the latest Gnulib's, which utilizes
+	_GL_ATTRIBUTE_PURE not available from libintl.  This is a
+	temporary fix for the 0.19.2 release and should be reverted once
+	it is fixed either in gettext or Gnulib.
+
+2014-06-10  Daiki Ueno  <ueno@gnu.org>
+
+	* gettext 0.19.1 released.
+
+2014-06-06  Daiki Ueno  <ueno@gnu.org>
+
+	autogen.sh: Use xz-compressed archive tarball
+	* autogen.sh: Fetch archive.dir-latest.tar.xz instead of .tar.gz.
+
+2014-06-04  Jim Meyering  <meyering@fb.com>  (tiny change)
+
+	configure: also distribute xz-compressed tarballs
+	* configure.ac (AM_INIT_AUTOMAKE): Add dist-xz, so that xz-compressed
+	.tar.xz tarballs will be distributed alongside .tar.gz ones.
+
+2014-06-02  Daiki Ueno  <ueno@gnu.org>
+
+	* gettext 0.19 released.
+
+2014-05-04  Jehan  <jehan@girinstud.io>  (tiny change)
+
+	configure: require automake >= 1.13
+	Macro AM_EXTRA_RECURSIVE_TARGETS defined in Automake 1.13.
+	* configure.ac (AM_INIT_AUTOMAKE): Require Automake 1.13 or later.
+
+2014-04-22  Daiki Ueno  <ueno@gnu.org>
+
+	m4: Apply NM detection fix from Libtool
+	2013-04-28  Peter Rosin <peda@lysator.liu.se>
+		libtool: break all the way out when a good nm is found
+		* m4/libtool.m4 (LT_PATH_NM): Break all the way out on a good
+		match.
+
+2014-04-22  Daiki Ueno  <ueno@gnu.org>
+
+	m4: Revert commit d6690cc7 to libtool.m4
+	Reported by Benjamin Gilbert at:
+	<https://savannah.gnu.org/bugs/?41203>
+	With recent libtool, this patch did nothing but fix the output
+	message of configure.
+	* m4/libtool.m4: Remove the special handling of NM detection when
+	cross-compiling mingw32 on cygwin.
+
+2014-04-22  Daiki Ueno  <ueno@gnu.org>
+
+	build: Use git-version-gen intead of version.sh
+	* version.sh: Remove.
+	* autogen.sh: Import git-version-gen from Gnulib.
+	* Makefile.am (EXTRA_DIST): Remove version.sh and add
+	$(top_srcdir)/.version.
+	(BUILT_SOURCES): Add $(top_srcdir)/.version.
+	($(top_srcdir)/.version): New rule.
+	(dist-hook): New rule.
+	* configure.ac: Use git-version-gen in AC_INIT.
+
+2014-04-21  Daiki Ueno  <ueno@gnu.org>
+
+	autogen.sh: Split the regeneration of data files into update.sh
+	* autogen.sh: Separate out PO files update logic to...
+	* update-po.sh: ...here.
+	* Makefile.am (EXTRA_DIST): Add update-po.sh.
+
+2014-04-17  Daiki Ueno  <ueno@gnu.org>
+
+	* autogen.sh: Use included gettext-tools for bootstrap
+	To regenerate POT files, autogen.sh had an implicit dependency on
+	gettext-tools installed on system.  This prohibited to use any new
+	features in our examples.  Let autogen.sh use included version of
+	gettext-tools, by prepending $builddir to the PATH.
+
+2014-04-07  Daiki Ueno  <ueno@gnu.org>
+
+	* autogen.sh: Error out when gnulib-tool exit with non-zero.
+
+2013-12-17  Daiki Ueno  <ueno@gnu.org>
+
+	Add missing extern-inline.m4 into archive.
+	Problem reported by Reuben Thomas in:
+	<https://lists.gnu.org/archive/html/bug-gettext/2013-12/msg00010.html>.
+	* Makefile.am (distcheck-hook): Check extern-inline.m4.
+
+2013-08-13  Michele Locati <michele@locati.it>  (tiny change)
+
+	* windows/gettext.rc: Update copyright year.
+
+2013-08-08  Daiki Ueno  <ueno@gnu.org>
+
+	* .dir-locals.el: New file to force spaces instead of tabs in C
+	and shell-script files.
+
+2013-08-07  Daiki Ueno  <ueno@gnu.org>
+
+	* NEWS: Add entry for 0.18.4.  Mention GSettings schema file support.
+
+2013-07-10  Daiki Ueno  <ueno@gnu.org>
+
+	gettext-tools: convert tests to use init.sh from Gnulib
+	* autogen.sh: Copy tests/init.sh from Gnulib into gettext-tools/tests.
+
+2013-07-07  Daiki Ueno  <ueno@gnu.org>
+
+	* NEWS: Mention libasprintf change and Tcl bug fix.
+
+2013-06-26  Daiki Ueno  <ueno@gnu.org>
+
+	* autogen.sh: Mention GNULIB_TOOL again for off-line bootstrap.
+
+2013-06-17  Daiki Ueno  <ueno@gnu.org>
+
+	Embed Gnulib using git submodule.
+	* autogen.sh: Port git submodule update code from the 'bootstrap'
+	script in Gnulib and respect the GNULIB_SRCDIR envvar.
+	(cleanup_gnulib): New function borrowed from Gnulib.
+	(git_modules_config): Likewise.
+	(gnulib_path): New variable.
+
+2013-06-13  Daiki Ueno  <ueno@gnu.org>
+
+	* NEWS: Document more new features.  Mention Glade msgctxt support
+	and msginit portability fix, and note that JavaScript support is
+	only partial.
+
+2013-06-11  Daiki Ueno  <ueno@gnu.org>
+
+	* NEWS: Mention that future 'gettextize' will require Automake 1.10.
+	Suggested by Stefano Lattarini.
+
+2013-06-08  Stefano Lattarini  <stefano.lattarini@gmail.com>  (tiny change)
+
+	build: drop the 'fixacocal' auxiliary script
+	The comments in that script state that its use is only required to
+	work around issues in aclocal from Automake 1.10, while the rest
+	of the Gettext build infrastructure assumes Automake >= 1.11 anyway.
+	* autogen.sh: Drop invocations of 'fixaclocal', simply invoke the
+	'aclocal' program directly.
+	* build-aux/fixaclocal: Remove.
+	* Makefile.am (EXTRA_DIST): Stop distributing it.
+	(ACLOCAL): Drop redefinition in function of 'fixaclocal'.
+	* gettext-runtime/Makefile.am (ACLOCAL): Likewise.
+	* gettext-runtime/libasprintf/Makefile.am (ACLOCAL): Likewise.
+	* gettext-tools/Makefile.am (ACLOCAL): Likewise.
+	* gettext-tools/examples/Makefile.am (ACLOCAL): Likewise.
+
+2013-06-04  Daiki Ueno  <ueno@gnu.org>
+
+	Support for Vala.
+	* NEWS: Mention Vala support.
+
+2013-05-29  Stefano Lattarini  <stefano.lattarini@gmail.com>  (tiny change)
+
+	* configure.ac (AM_INIT_AUTOMAKE): Add 'parallel-tests' option.
+	Require Automake 1.11.1 or later, so that the 'parallel-tests'
+	will be certainly available.
+	(AC_INIT): Require Autoconf 2.62 or later; that is the minimal
+	version supported by Automake 1.11.1 or later.
+	* autogen.sh: Update version number requirement for Autoconf.
+
+2013-05-20  Pavel Kharitonov  <ineiev@gnu.org>  (tiny change)
+
+	Add --previous option to msgattrib.
+	* NEWS: Mention --previous msgattrib option.
+
+2013-05-13  Daiki Ueno  <ueno@gnu.org>
+
+	Fix bootstrap error on Mac OS X.
+	* autogen.sh (GNULIB_MODULES_LIBGETTEXTPO): Add strchrnul.
+
+2013-05-02  Daiki Ueno  <ueno@gnu.org>
+
+	* autogen.sh: Retrieve archive.dir.tar from FTP when bootstrapping.
+	Reported by Stefano Lattarini in
+	<https://lists.gnu.org/archive/html/bug-gettext/2012-12/msg00058.html>
+
+2013-04-26  Daiki Ueno  <ueno@gnu.org>
+
+	* NEWS: Mention Python brace format.
+
+2013-04-17  Daiki Ueno  <ueno@gnu.org>
+
+	* NEWS: Mention JavaScript support.
+
+2013-04-11  Daiki Ueno  <ueno@gnu.org>
+
+	* NEWS: Mention Lua support.
+
+2013-03-06  Daiki Ueno  <ueno@gnu.org>
+
+	* AUTHORS: Update from fencepost.gnu.org:/gd/gnuorg/copyright.list.
+
+2013-01-17  Daiki Ueno  <ueno@gnu.org>
+
+	Fix link errors related to C99-style extern inline.
+	Reported by Sam Thursfield <sam.thursfield@codethink.co.uk>.
+	* autogen.sh (GNULIB_MODULES_LIBASPRINTF): Add xsize.
+
+2012-12-25  Daiki Ueno  <ueno@gnu.org>
+
+	* gettext-0.18.2 released.
+
+2012-12-25  Daiki Ueno  <ueno@gnu.org>
+
+	* version.sh: Bump to 0.18.2.
+	* autogen.sh: Record the gnulib version that is being used.
+	* NEWS: Update the release date of 0.18.2.  Reformat "Autoconf
+	macros" change.
+
+2012-12-21  Daiki Ueno  <ueno@gnu.org>
+
+	Fix W64 build errors.
+	* autogen.sh (GNULIB_MODULES_LIBASPRINTF): Add extern-inline, for
+	the last xsize.h update.
+	(GNULIB_MODULES_TOOLS_FOR_SRC_COMMON_DEPENDENCIES): Add locale,
+	not to have copies of locale.h in both libgrep and gnulib-lib.
+	(GNULIB_MODULES_LIBGETTEXTPO): Add close.
+
+2012-12-08  Daiki Ueno  <ueno@unixuser.org>
+
+	* autogen.sh: Ignore libunistring tests which are known to fail.
+	(GNULIB_MODULES_TOOLS_LIBUNISTRING_TESTS): New variable.
+
+2012-12-08  Daiki Ueno  <ueno@unixuser.org>
+
+	* NEWS: Mention that autoconf 2.60 is required.
+	Suggested by Bruno Haible <bruno@clisp.org>.
+
+2012-04-29  Bruno Haible  <bruno@clisp.org>
+
+	Allow use of autoconf-2.69 and automake-1.12.
+	* autogen.sh: Update comments.
+
+2012-02-18  Bruno Haible  <bruno@clisp.org>
+
+	Improve ensurance that intmax_t gets defined in libasprintf.
+	* autogen.sh: Create gettext-runtime/libasprintf/gnulib-m4/intmax_t.m4,
+	not gettext-runtime/m4/intmax_t.m4.
+	* Makefile.am (distcheck-hook): Update.
+
+2012-02-18  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.am (distcheck-hook): Update after gnulib changed.
+
+2012-01-26  Bruno Haible  <bruno@clisp.org>
+
+	Modernize quoting.
+	* NEWS: Quote 'like this', not `like this', as per the recent change
+	to the GNU coding standards.
+	* INSTALL: Process through sed -e "s/\`\([^']*\)'/‘\1’/g"
+
+2011-10-18  Bruno Haible  <bruno@clisp.org>
+
+	* m4/libtool.m4: Update from libtool-2.4.2, with modifications.
+	2009-04-23  Bruno Haible  <bruno@clisp.org>
+		Fix recognition of "nm" command.
+		* m4/libtool.m4 (LT_PATH_NM): Try "nm" program also when
+		compiling for mingw in a cygwin environment.
+	2008-04-06  Bruno Haible  <bruno@clisp.org>
+		* m4/libtool.m4 (LT_INIT): When setting LIBTOOL, use
+		CONFIG_SHELL; don't assume that the Makefile.in will set SHELL
+		to ${CONFIG_SHELL}.
+	* m4/ltoptions.m4: Likewise.
+	* m4/ltversion.m4: Likewise.
+	* build-aux/ltmain.sh: Likewise.
+
+2011-09-12  Bruno Haible  <bruno@clisp.org>
+
+	Update after gnulib changed.
+	* autogen.sh (GNULIB_MODULES_TOOLS_FOR_SRC): Add opendir, readdir,
+	closedir.
+
+2011-07-12  Bruno Haible  <bruno@clisp.org>
+
+	Update after gnulib changed.
+	* autogen.sh (GNULIB_MODULES_TOOLS_FOR_SRC_COMMON_DEPENDENCIES): Update
+	module names.
+
+2011-06-08  Bruno Haible  <bruno@clisp.org>
+
+	Fix a link error due to rpl_wcrtomb on Solaris 9.
+	* autogen.sh: Pass the option --witness-c-macro to the gnulib-tool
+	invocation for libgrep.
+
+2011-06-05  Bruno Haible  <bruno@clisp.org>
+
+	* autogen.sh (GNULIB_MODULES_TOOLS_FOR_LIBGREP): Add mbrlen.
+
+2011-06-04  Bruno Haible  <bruno@clisp.org>
+
+	Ensure intmax_t gets defined in libasprintf.
+	* autogen.sh: Create gettext-runtime/m4/intmax_t.m4, copied from
+	gnulib.
+	* Makefile.am (distcheck-hook): Check also intmax_t.m4.
+
+2011-06-03  Bruno Haible  <bruno@clisp.org>
+
+	* autogen.sh (GNULIB_MODULES_LIBASPRINTF): Add verify.
+	* Makefile.am (distcheck-hook): Check also verify.h.
+
+2011-06-03  Bruno Haible  <bruno@clisp.org>
+
+	Copyright: Use LGPL 2.1 instead of LGPL 2.0.
+	* os2/iconv/iconv.*: Update copyright header.
+	* Makefile.am (distcheck-hook): Update.
+
+2011-02-12  Bruno Haible  <bruno@clisp.org>
+
+	Use gnulib's setlocale in all the programs.
+	* autogen.sh (GNULIB_MODULES_RUNTIME_FOR_SRC,
+	GNULIB_MODULES_TOOLS_FOR_SRC): Add setlocale.
+
+2011-02-12  Bruno Haible  <bruno@clisp.org>
+
+	Update after gnulib changed.
+	* autogen.sh (GNULIB_MODULES_TOOLS_FOR_SRC): Add wctype-h, remove
+	wctype.
+
+2011-02-12  Bruno Haible  <bruno@clisp.org>
+
+	Use u8_mbtoucr instead of u8_mbtouc in some places.
+	* autogen.sh (GNULIB_MODULES_TOOLS_FOR_SRC,
+	GNULIB_MODULES_LIBGETTEXTPO): Add unistr/u8-mbtoucr.
+
+2011-01-28  Bruno Haible  <bruno@clisp.org>
+
+	Add a comment.
+	* m4/woe32-dll.m4: Add a reference to the woe32dll writeup.
+
+2010-12-10  Bruno Haible  <bruno@clisp.org>
+
+	Update after gnulib changed.
+	* autogen.sh (GNULIB_MODULES_TOOLS_FOR_SRC): Add spawn-pipe, remove
+	pipe.
+
+2010-09-24  Bruno Haible  <bruno@clisp.org>
+
+	* m4/libtool.m4: Update from libtool-2.4, with modifications.
+	2009-04-23  Bruno Haible  <bruno@clisp.org>
+		Fix recognition of "nm" command.
+		* m4/libtool.m4 (LT_PATH_NM): Try "nm" program also when
+		compiling for mingw in a cygwin environment.
+	2008-04-06  Bruno Haible  <bruno@clisp.org>
+		* m4/libtool.m4 (LT_INIT): When setting LIBTOOL, use
+		CONFIG_SHELL; don't assume that the Makefile.in will set SHELL
+		to ${CONFIG_SHELL}.
+	* m4/ltversion.m4: Update from libtool-2.4.
+	* build-aux/ltmain.sh: Likewise.
+
+2010-09-04  Bruno Haible  <bruno@clisp.org>
+
+	Simplify use of gnulib-tool now that gnulib-tool --import works better.
+	* autogen.sh: Don't remove gnulib-cache.m4 before running gnulib-tool.
+
+2010-07-31  Bruno Haible  <bruno@clisp.org>
+
+	Use new ansi-c++.m4 from gnulib.
+	* autogen.sh (GNULIB_MODULES_RUNTIME_OTHER, GNULIB_MODULES_TOOLS_OTHER):
+	Add ansi-c++-opt.
+	Reported at <https://savannah.gnu.org/bugs/?30607>.
+
+2010-06-06  Bruno Haible  <bruno@clisp.org>
+
+	New options --with-xz and --with-bzip2 for compressing the archive.
+	* DEPENDENCIES: Correct placement of entries for 'tar' and 'gzip'. Add
+	entries for 'bzip2' and 'xz'.
+
+2010-06-04  Bruno Haible  <bruno@clisp.org>
+
+	* m4/libtool.m4: Update from libtool-2.2.8, with modifications.
+	2009-04-23  Bruno Haible  <bruno@clisp.org>
+		Fix recognition of "nm" command.
+		* m4/libtool.m4 (LT_PATH_NM): Try "nm" program also when
+		compiling for mingw in a cygwin environment.
+	2008-04-06  Bruno Haible  <bruno@clisp.org>
+		* m4/libtool.m4 (LT_INIT): When setting LIBTOOL, use
+		CONFIG_SHELL; don't assume that the Makefile.in will set SHELL
+		to ${CONFIG_SHELL}.
+	* m4/ltoptions.m4: Update from libtool-2.2.8.
+	* m4/ltversion.m4: Likewise.
+	* m4/lt~obsolete.m4: Likewise.
+	* build-aux/ltmain.sh: Likewise.
+
 2010-06-04  Bruno Haible  <bruno@clisp.org>
 
 	* gettext-0.18.1 released.

@@ -1,5 +1,5 @@
 /* GNU gettext - internationalization aids
-   Copyright (C) 1995-1996, 1998, 2000-2001, 2003, 2005-2006 Free Software Foundation, Inc.
+   Copyright (C) 1995-1996, 1998, 2000-2001, 2003, 2005-2006, 2012 Free Software Foundation, Inc.
 
    This file was written by Peter Miller <pmiller@agso.gov.au>
 
@@ -220,11 +220,14 @@ message
                   check_obsolete ($1, $3);
                   check_obsolete ($1, $4);
                   if (!$1.obsolete || pass_obsolete_entries)
-                    do_callback_message ($1.ctxt, string2, &$1.pos, $3.string,
-                                         $4.rhs.msgstr, $4.rhs.msgstr_len, &$4.pos,
-                                         $1.prev_ctxt,
-                                         $1.prev_id, $1.prev_id_plural,
-                                         $1.obsolete);
+                    {
+                      do_callback_message ($1.ctxt, string2, &$1.pos, $3.string,
+                                           $4.rhs.msgstr, $4.rhs.msgstr_len, &$4.pos,
+                                           $1.prev_ctxt,
+                                           $1.prev_id, $1.prev_id_plural,
+                                           $1.obsolete);
+                      free ($3.string);
+                    }
                   else
                     {
                       free_message_intro ($1);
@@ -237,7 +240,7 @@ message
                 {
                   check_obsolete ($1, $2);
                   check_obsolete ($1, $3);
-                  po_gram_error_at_line (&$1.pos, _("missing `msgstr[]' section"));
+                  po_gram_error_at_line (&$1.pos, _("missing 'msgstr[]' section"));
                   free_message_intro ($1);
                   string_list_destroy (&$2.stringlist);
                   free ($3.string);
@@ -246,7 +249,7 @@ message
                 {
                   check_obsolete ($1, $2);
                   check_obsolete ($1, $3);
-                  po_gram_error_at_line (&$1.pos, _("missing `msgid_plural' section"));
+                  po_gram_error_at_line (&$1.pos, _("missing 'msgid_plural' section"));
                   free_message_intro ($1);
                   string_list_destroy (&$2.stringlist);
                   free ($3.rhs.msgstr);
@@ -254,7 +257,7 @@ message
         | message_intro string_list
                 {
                   check_obsolete ($1, $2);
-                  po_gram_error_at_line (&$1.pos, _("missing `msgstr' section"));
+                  po_gram_error_at_line (&$1.pos, _("missing 'msgstr' section"));
                   free_message_intro ($1);
                   string_list_destroy (&$2.stringlist);
                 }
@@ -411,6 +414,7 @@ string_list
                 {
                   string_list_init (&$$.stringlist);
                   string_list_append (&$$.stringlist, $1.string);
+                  free ($1.string);
                   $$.pos = $1.pos;
                   $$.obsolete = $1.obsolete;
                 }
@@ -419,6 +423,7 @@ string_list
                   check_obsolete ($1, $2);
                   $$.stringlist = $1.stringlist;
                   string_list_append (&$$.stringlist, $2.string);
+                  free ($2.string);
                   $$.pos = $1.pos;
                   $$.obsolete = $1.obsolete;
                 }
@@ -429,6 +434,7 @@ prev_string_list
                 {
                   string_list_init (&$$.stringlist);
                   string_list_append (&$$.stringlist, $1.string);
+                  free ($1.string);
                   $$.pos = $1.pos;
                   $$.obsolete = $1.obsolete;
                 }
@@ -437,6 +443,7 @@ prev_string_list
                   check_obsolete ($1, $2);
                   $$.stringlist = $1.stringlist;
                   string_list_append (&$$.stringlist, $2.string);
+                  free ($2.string);
                   $$.pos = $1.pos;
                   $$.obsolete = $1.obsolete;
                 }

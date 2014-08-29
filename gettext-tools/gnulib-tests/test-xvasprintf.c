@@ -1,5 +1,5 @@
 /* Test of xvasprintf() and xasprintf() functions.
-   Copyright (C) 2007-2010 Free Software Foundation, Inc.
+   Copyright (C) 2007-2014 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,6 +15,13 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Written by Bruno Haible <bruno@clisp.org>, 2007.  */
+
+/* Tell GCC not to warn about the specific edge cases tested here.  */
+#if (__GNUC__ == 4 && 3 <= __GNUC_MINOR__) || 4 < __GNUC__
+# pragma GCC diagnostic ignored "-Wformat-zero-length"
+# pragma GCC diagnostic ignored "-Wformat-nonliteral"
+# pragma GCC diagnostic ignored "-Wformat-security"
+#endif
 
 #include <config.h>
 
@@ -55,7 +62,7 @@ test_xvasprintf (void)
 
   {
     /* Silence gcc warning about zero-length format string.  */
-    char *empty = "";
+    const char *empty = "";
     result = my_xasprintf (empty);
     ASSERT (result != NULL);
     ASSERT (strcmp (result, "") == 0);
@@ -79,7 +86,7 @@ test_xvasprintf (void)
 }
 
 static void
-test_xasprintf ()
+test_xasprintf (void)
 {
   int repeat;
   char *result;
@@ -93,9 +100,11 @@ test_xasprintf ()
     }
 
   {
-    /* Silence gcc warning about zero-length format string.  */
-    char *empty = "";
-    result = xasprintf (empty);
+    /* Silence gcc warning about zero-length format string,
+       and about "format not a string literal and no format"
+       (whatever that means) .  */
+    const char *empty = "";
+    result = xasprintf (empty, empty);
     ASSERT (result != NULL);
     ASSERT (strcmp (result, "") == 0);
     free (result);

@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# Copyright (C) 1995-1998, 2000-2010 Free Software Foundation, Inc.
+# Copyright (C) 1995-1998, 2000-2013 Free Software Foundation, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,10 +25,11 @@ package=@PACKAGE@
 version=@VERSION@
 
 # Set variables
-# - gettext_dir     directory where the sources are stored.
+# - gettext_datadir     directory where the data files are stored.
 prefix="@prefix@"
 datarootdir="@datarootdir@"
-gettext_dir="@datadir@/gettext"
+: ${gettext_datadir="@datadir@/gettext"}
+: ${AUTOM4TE=autom4te}
 
 # func_tmpdir
 # creates a temporary directory.
@@ -69,18 +70,7 @@ func_find_curr_installdir ()
   case "$curr_executable" in
     */* | *\\*) ;;
     *) # Need to look in the PATH.
-      if test "${PATH_SEPARATOR+set}" != set; then
-        func_tmpdir
-        { echo "#! /bin/sh"; echo "exit 0"; } > "$tmp"/conf.sh
-        chmod +x "$tmp"/conf.sh
-        if (PATH="/nonexistent;$tmp"; conf.sh) >/dev/null 2>&1; then
-          PATH_SEPARATOR=';'
-        else
-          PATH_SEPARATOR=:
-        fi
-        rm -rf "$tmp"
-      fi
-      save_IFS="$IFS"; IFS="$PATH_SEPARATOR"
+      save_IFS="$IFS"; IFS="${PATH_SEPARATOR='@PATH_SEPARATOR@'}"
       for dir in $PATH; do
         IFS="$save_IFS"
         test -z "$dir" && dir=.
@@ -144,8 +134,49 @@ if test "@RELOCATABLE@" = yes; then
   func_find_curr_installdir # determine curr_installdir
   func_find_prefixes
   # Relocate the directory variables that we use.
-  gettext_dir=`echo "$gettext_dir/" | sed -e "s%^${orig_installprefix}/%${curr_installprefix}/%" | sed -e 's,/$,,'`
+  gettext_datadir=`echo "$gettext_datadir/" | sed -e "s%^${orig_installprefix}/%${curr_installprefix}/%" | sed -e 's,/$,,'`
 fi
+
+# func_trace_autoconf macro configure.ac
+# traces an Autoconf macro call and outputs the arguments to stdout,
+# using autom4te.
+func_trace_autoconf ()
+{
+  echo '\
+dnl disable macros which may abort autom4te
+m4_undefine([m4_assert])
+m4_undefine([m4_fatal])
+m4_undefine([m4_warn])
+m4_undefine([m4_errprintn])
+m4_undefine([m4_exit])
+m4_undefine([m4_include])
+m4_undefine([m4_esyscmd])
+' \
+  | "$AUTOM4TE" --no-cache --language=Autoconf-without-aclocal-m4 \
+    --trace="$1":\$% - "$2" 2>/dev/null
+}
+
+# func_trace_sed macro configure.ac
+# traces an Autoconf macro call and outputs the arguments to stdout,
+# using sed.
+func_trace_sed ()
+{
+  sed_extract_arguments='
+s,#.*$,,; s,^dnl .*$,,; s, dnl .*$,,;
+/'"$1"'(/ {
+  ta
+  :a
+    s/)/)/
+    tb
+    s/\\$//
+    N
+    ba
+  :b
+  s,^.*'"$1"'([[ ]*\([^]"$`\\)]*\).*$,\1,p
+}
+d'
+  sed -e "$sed_extract_arguments" "$2"
+}
 
 # func_usage
 # outputs to stdout the --help usage message.
@@ -174,7 +205,7 @@ Report bugs to <bug-gnu-gettext@gnu.org>."
 func_version ()
 {
   echo "$progname (GNU $package) $version"
-  echo "Copyright (C) 1995-1998, 2000-2010 Free Software Foundation, Inc.
+  echo "Copyright (C) 1995-1998, 2000-2013 Free Software Foundation, Inc.
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law."
@@ -192,6 +223,10 @@ func_fatal_error ()
 
 # Nuisances.
 (unset CDPATH) >/dev/null 2>&1 && unset CDPATH
+
+# Unset more variables known to interfere with behavior of common tools.
+CLICOLOR_FORCE= GREP_OPTIONS=
+unset CLICOLOR_FORCE GREP_OPTIONS
 
 # Command-line option processing.
 # Removes the OPTIONS from the arguments. Sets the variables:
@@ -319,15 +354,35 @@ if test $force -eq 0; then
   fi
 fi
 
+# Select the method for Autoconf macro tracing.  func_trace_autoconf
+# is more accurate than func_trace_sed, but it only works with
+# autoconf >= 2.69.
+if echo "AC_PREREQ([2.69])" \
+  | "$AUTOM4TE" --no-cache --language=Autoconf-without-aclocal-m4 - 2>&1; then
+  func_trace=func_trace_autoconf
+else
+  func_trace=func_trace_sed
+fi
+
 # Check in which directory config.rpath etc. belong.
-auxdir=`cat "$configure_in" | grep '^AC_CONFIG_AUX_DIR' | sed -n -e 's/AC_CONFIG_AUX_DIR(\([^()]*\))/\1/p' | sed -e 's/^\[\(.*\)\]$/\1/' | sed -e 1q`
+auxdir=`"$func_trace" AC_CONFIG_AUX_DIR "$configure_in"`
 if test -n "$auxdir"; then
   auxdir="$auxdir/"
 fi
 
+# Check in which directory gettext.m4 etc. belong.
+macrodirs=`"$func_trace" AC_CONFIG_MACRO_DIR_TRACE "$configure_in"`
+if test -z "$macrodirs"; then
+  macrodirs=`"$func_trace" AC_CONFIG_MACRO_DIR "$configure_in"`
+fi
+for arg in $macrodirs; do
+  m4dir="$arg"
+  break
+done
+
 # For simplicity we change to the gettext source directory.
-cd "$gettext_dir" ||
-  func_fatal_error "gettext source directory '${gettext_dir}' doesn't exist"
+cd "$gettext_datadir" ||
+  func_fatal_error "gettext source directory '${gettext_datadir}' doesn't exist"
 
 # Variables which keep track what has been modified.
 added_directories=
@@ -622,7 +677,7 @@ test -d "$srcdir/$auxdir" || {
 for file in *; do
   case $file in
     ABOUT-NLS)
-      func_linkorcopy $file "$gettext_dir/$file" $file
+      func_linkorcopy $file "$gettext_datadir/$file" $file
       ;;
     config.rpath)
       if test -f "$srcdir/$auxdir$file"; then
@@ -630,7 +685,7 @@ for file in *; do
       else
         added_extradist="$added_extradist $auxdir$file"
       fi
-      func_linkorcopy $file "$gettext_dir/$file" "$auxdir$file"
+      func_linkorcopy $file "$gettext_datadir/$file" "$auxdir$file"
       ;;
   esac
 done
@@ -641,7 +696,7 @@ if test -n "$intldir"; then
   for file in *; do
     if test $file != COPYING.LIB-2.0 && test $file != COPYING.LIB-2.1; then
       if test $file != plural.c; then
-        func_linkorcopy $file "$gettext_dir/intl/$file" intl/$file
+        func_linkorcopy $file "$gettext_datadir/intl/$file" intl/$file
       else
         # plural.c is a generated file; it must be copied and touched.
         func_copy $file intl/$file
@@ -655,9 +710,19 @@ if test -n "$intldir"; then
 else
   echo "Not copying intl/ directory."
   # Tell the user what to put into configure.ac, if it is not already there.
-  if grep '^AM_GNU_GETTEXT([[]\?external[]]\?[ 	]*[,)]' "$srcdir/$configure_in" > /dev/null; then
-    :
-  else
+  external=
+  # Need to use func_trace_sed instead of $func_trace, since
+  # AM_GNU_GETTEXT is not a standard Autoconf trace.
+  xargs=`func_trace_sed AM_GNU_GETTEXT "$srcdir/$configure_in"`
+  save_IFS="$IFS"; IFS=:
+  for arg in $xargs; do
+    if test 'external' = "$arg"; then
+      external=yes
+      break
+    fi
+  done
+  IFS="$save_IFS"
+  if test -z "$external"; then
     please="$please
 Please use AM_GNU_GETTEXT([external]) in order to cause autoconfiguration
 to look for an external libintl.
@@ -686,7 +751,7 @@ for podir in $podirs; do
       fi
     fi
     func_backup "$podir/$file"
-    func_linkorcopy $file "$gettext_dir/po/$file" "$podir/$file"
+    func_linkorcopy $file "$gettext_datadir/po/$file" "$podir/$file"
   done
   for file in *; do
     case $file in
@@ -694,7 +759,7 @@ for podir in $podirs; do
         # Already handled above.
         ;;
       Makevars.template)
-        func_linkorcopy Makevars.template "$gettext_dir/po/Makevars.template" "$podir/Makevars.template"
+        func_linkorcopy Makevars.template "$gettext_datadir/po/Makevars.template" "$podir/Makevars.template"
         if test -f "$srcdir/po/Makevars"; then
           LC_ALL=C sed -n -e 's/[ 	]*\([A-Za-z0-9_]*\)[ 	]*=.*/\1/p' < "$srcdir/$podir/Makevars" | LC_ALL=C sort > "$srcdir/$podir/Makevars.tmp1"
           LC_ALL=C sed -n -e 's/[ 	]*\([A-Za-z0-9_]*\)[ 	]*=.*/\1/p' < "$srcdir/$podir/Makevars.template" | LC_ALL=C sort > "$srcdir/$podir/Makevars.tmp2"
@@ -729,7 +794,7 @@ You can then remove $podir/Makevars.template.
           fi
         fi
         func_backup "$podir/$file"
-        func_linkorcopy $file "$gettext_dir/po/$file" "$podir/$file"
+        func_linkorcopy $file "$gettext_datadir/po/$file" "$podir/$file"
         ;;
     esac
   done
@@ -796,31 +861,39 @@ if test -f "$srcdir/Makefile.am"; then
     esac
   fi
 
-  # Extract the macro directory name from Makefile.am.
-  aclocal_amflags=`grep '^ACLOCAL_AMFLAGS[ 	]*=' "$srcdir/Makefile.am" | sed -e 's/^ACLOCAL_AMFLAGS[ 	]*=\(.*\)$/\1/'`
-  m4dir=m4
-  m4dir_defaulted=yes
-  m4dir_is_next=
-  for arg in $aclocal_amflags; do
-    if test -n "$m4dir_is_next"; then
-      # Ignore absolute directory pathnames, like /usr/local/share/aclocal.
-      case "$arg" in
-        /*) ;;
-        *)
-          m4dir="$arg"
-          m4dir_defaulted=
-          break
-          ;;
-      esac
-      m4dir_is_next=
-    else
-      if test "X$arg" = "X-I"; then
-        m4dir_is_next=yes
-      else
+  if test -z "$m4dir"; then
+    # Extract the macro directory name from Makefile.am.
+    aclocal_amflags=`grep '^ACLOCAL_AMFLAGS[ 	]*=' "$srcdir/Makefile.am" | sed -e 's/^ACLOCAL_AMFLAGS[ 	]*=\(.*\)$/\1/'`
+    m4dir_is_next=
+    for arg in $aclocal_amflags; do
+      if test -n "$m4dir_is_next"; then
+        # Ignore absolute directory pathnames, like /usr/local/share/aclocal.
+        case "$arg" in
+          /*) ;;
+          *)
+            test -z "$m4dir" || m4dir="$arg"
+            macrodirs="$macrodirs $arg"
+            ;;
+        esac
         m4dir_is_next=
+      else
+        if test "X$arg" = "X-I"; then
+          m4dir_is_next=yes
+        else
+          m4dir_is_next=
+        fi
       fi
-    fi
-  done
+    done
+    for arg in $macrodirs; do
+      m4dir="$arg"
+      break
+    done
+  fi
+
+  if test -z "$m4dir"; then
+    m4dir=m4
+    m4dir_defaulted=yes
+  fi
 
   # Decide whether to use $m4dir/ChangeLog, or to use ChangeLog instead.
   if test -d "$srcdir/$m4dir" && test -f "$srcdir/ChangeLog" && test ! -f "$srcdir/$m4dir/ChangeLog"; then
@@ -1026,20 +1099,9 @@ if test -f "$srcdir/Makefile.am"; then
     fi
   fi
   # Extract the aclocal options name from Makefile.am.
-  aclocal_amflags=`grep '^ACLOCAL_AMFLAGS[ 	]*=' "$srcdir/Makefile.am" | sed -e 's/^ACLOCAL_AMFLAGS[ 	]*=\(.*\)$/\1/'`
   aclocal_options=
-  m4dir_is_next=
-  for arg in $aclocal_amflags; do
-    if test -n "$m4dir_is_next"; then
-      aclocal_options="$aclocal_options -I $arg"
-      m4dir_is_next=
-    else
-      if test "X$arg" = "X-I"; then
-        m4dir_is_next=yes
-      else
-        m4dir_is_next=
-      fi
-    fi
+  for arg in $macrodirs; do
+    aclocal_options="$aclocal_options -I $arg"
   done
   please="$please
 Please run 'aclocal$aclocal_options' to regenerate the aclocal.m4 file.
@@ -1258,7 +1320,7 @@ fi
 if $doit; then
   echo "$please"
   echo "You might also want to copy the convenience header file gettext.h"
-  echo "from the $gettext_dir directory into your package."
+  echo "from the $gettext_datadir directory into your package."
   echo "It is a wrapper around <libintl.h> that implements the configure --disable-nls"
   echo "option."
   echo

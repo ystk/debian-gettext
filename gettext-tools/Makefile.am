@@ -17,7 +17,6 @@
 ## Process this file with automake to produce Makefile.in.
 
 AUTOMAKE_OPTIONS = 1.5 gnu no-dependencies
-ACLOCAL = ../build-aux/fixaclocal @ACLOCAL@
 ACLOCAL_AMFLAGS = -I m4 -I ../gettext-runtime/m4 -I ../m4 -I gnulib-m4 -I libgrep/gnulib-m4 -I libgettextpo/gnulib-m4
 
 SUBDIRS = doc intl gnulib-lib libgrep src libgettextpo po projects styles misc man m4 tests gnulib-tests examples
@@ -59,3 +58,9 @@ EXTRA_DIST += README.woe32
 # Cygwin support.
 
 EXTRA_DIST += woe32dll/export.h
+
+maintainer-update-po: $(top_builddir)/config.status
+	$(SHELL) ./config.status --recheck
+	$(SHELL) ./config.status po/Makefile.in po-directories
+	cd po && $(MAKE) update-po
+	cd examples && $(MAKE) maintainer-update-po

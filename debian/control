@@ -2,8 +2,8 @@ Source: gettext
 Section: devel
 Priority: optional
 Maintainer: Santiago Vila <sanvila@debian.org>
-Standards-Version: 3.9.1
-Build-Depends: libexpat1-dev, fastjar, default-jdk, file, libncurses5-dev, libxml2-dev, libglib2.0-dev, libcroco3-dev, git (>= 1:1.7.0.5), libunistring-dev
+Standards-Version: 3.9.5
+Build-Depends: libexpat1-dev, fastjar, default-jdk, file, libncurses5-dev, libxml2-dev, libglib2.0-dev, libcroco3-dev, xz-utils, libunistring-dev
 Homepage: http://www.gnu.org/software/gettext/
 
 Package: gettext-base
@@ -17,11 +17,11 @@ Description: GNU Internationalization utilities for the base system
 
 Package: gettext
 Architecture: any
-Depends: ${shlibs:Depends}, libgettextpo0 (= ${binary:Version}), libasprintf0c2 (= ${binary:Version}), gettext-base, dpkg (>= 1.15.4) | install-info
-Recommends: curl | wget | lynx-cur, autopoint
+Multi-Arch: foreign
+Depends: ${shlibs:Depends}, gettext-base, dpkg (>= 1.15.4) | install-info
+Recommends: curl | wget | lynx-cur, autopoint, libasprintf-dev, libgettextpo-dev
 Breaks: autopoint (<= 0.17-11)
 Suggests: gettext-doc
-Provides: libasprintf-dev, libgettextpo-dev
 Description: GNU Internationalization utilities
  Interesting for authors or maintainers of other packages or programs
  which they want to see internationalized.
@@ -29,7 +29,7 @@ Description: GNU Internationalization utilities
 Package: gettext-el
 Section: lisp
 Architecture: all
-Depends: gettext, emacs23 | emacsen
+Depends: gettext, emacs | emacsen
 Description: Emacs po-mode for editing gettext .po files
  This package contains po-mode.el for easy .po editing using emacs.
 
@@ -45,7 +45,8 @@ Package: autopoint
 Section: devel
 Priority: optional
 Architecture: all
-Depends: git (>= 1:1.7.0.5) | git-core
+Multi-Arch: foreign
+Depends: xz-utils
 Replaces: gettext (<= 0.17-11)
 Description: The autopoint program from GNU gettext
  The `autopoint' program copies standard gettext infrastructure files
@@ -81,3 +82,25 @@ Description: GNU library to use fprintf and friends in C++
  This package contains the libasprintf shared library which makes the
  C formatted output routines (fprintf et al.) usable in C++ programs,
  for use with the <string> strings and the <iostream> streams.
+
+Package: libgettextpo-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: libgettextpo0 (= ${binary:Version})
+Suggests: gettext-doc
+Breaks: gettext (<< 0.18.1.1-10)
+Replaces: gettext (<< 0.18.1.1-10)
+Description: GNU Internationalization library development files
+ This package contains development files for the libgettextpo library.
+ 
+Package: libasprintf-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: libasprintf0c2 (= ${binary:Version})
+Suggests: gettext-doc
+Breaks: gettext (<< 0.18.1.1-10)
+Replaces: gettext (<< 0.18.1.1-10)
+Description: GNU Internationalization library development files
+ This package contains development files for the libasprintf library.

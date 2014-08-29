@@ -1,5 +1,5 @@
-# fcntl.m4 serial 3
-dnl Copyright (C) 2009, 2010 Free Software Foundation, Inc.
+# fcntl.m4 serial 5
+dnl Copyright (C) 2009-2014 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -19,16 +19,31 @@ AC_DEFUN([gl_FUNC_FCNTL],
   AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
   AC_REQUIRE([gl_FCNTL_H_DEFAULTS])
   AC_REQUIRE([AC_CANONICAL_HOST])
-  AC_CHECK_FUNCS_ONCE([fcntl])
+  AC_CHECK_FUNCS_ONCE([fcntl getdtablesize])
   if test $ac_cv_func_fcntl = no; then
     gl_REPLACE_FCNTL
   else
     dnl cygwin 1.5.x F_DUPFD has wrong errno, and allows negative target
+    dnl haiku alpha 2 F_DUPFD has wrong errno
     AC_CACHE_CHECK([whether fcntl handles F_DUPFD correctly],
       [gl_cv_func_fcntl_f_dupfd_works],
       [AC_RUN_IFELSE([AC_LANG_PROGRAM([[
+#ifdef HAVE_GETDTABLESIZE
+# include <unistd.h>
+#endif
 #include <fcntl.h>
-]], [[return fcntl (0, F_DUPFD, -1) != -1;
+#include <errno.h>
+]], [[int result = 0;
+#ifdef HAVE_GETDTABLESIZE
+      int bad_fd = getdtablesize ();
+#else
+      int bad_fd = 1000000;
+#endif
+      if (fcntl (0, F_DUPFD, -1) != -1) result |= 1;
+      if (errno != EINVAL) result |= 2;
+      if (fcntl (0, F_DUPFD, bad_fd) != -1) result |= 4;
+      if (errno != EINVAL) result |= 8;
+      return result;
          ]])],
          [gl_cv_func_fcntl_f_dupfd_works=yes],
          [gl_cv_func_fcntl_f_dupfd_works=no],
@@ -68,6 +83,14 @@ choke me
       dnl No witness macro needed for this bug.
     fi
   fi
+  dnl Replace fcntl() for supporting the gnulib-defined fchdir() function,
+  dnl to keep fchdir's bookkeeping up-to-date.
+  m4_ifdef([gl_FUNC_FCHDIR], [
+    gl_TEST_FCHDIR
+    if test $HAVE_FCHDIR = 0; then
+      gl_REPLACE_FCNTL
+    fi
+  ])
 ])
 
 AC_DEFUN([gl_REPLACE_FCNTL],
@@ -79,5 +102,4 @@ AC_DEFUN([gl_REPLACE_FCNTL],
   else
     REPLACE_FCNTL=1
   fi
-  AC_LIBOBJ([fcntl])
 ])

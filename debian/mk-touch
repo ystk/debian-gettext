@@ -1,0 +1,21 @@
+#!/bin/sh
+set -e
+package=gettext
+t=`tempfile`
+u=`tempfile`
+version=`head -n1 debian/changelog | awk '{ print $2 }' | sed -e 's/(//' -e 's/-.*//'`
+tar --utc --full-time -Jtvf ../${package}_${version}.orig.tar.xz > $t
+for file in `cat debian/keep-timestamps.txt`; do
+  timestamp=`awk -vfilename=${package}-${version}/${file} '$6 == filename { print $4 " " $5 " UTC" }' $t`
+  string="\"${timestamp}\" $file"
+  if ! grep -q "${string}" debian/rules; then
+    /bin/echo -e "\ttouch -d \"${timestamp}\" $file" >> ${u}
+  fi
+done
+if [ -s "${u}" ]; then
+  echo Warning: debian/rules is supposed to have these lines:
+  echo ""
+  cat $u
+  sleep 10
+fi
+rm -f ${t} ${u}

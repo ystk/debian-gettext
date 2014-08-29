@@ -24,6 +24,8 @@ endif
 DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
 DEB_HOST_MULTIARCH := $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 
+export AM_UPDATE_INFO_DIR = no
+
 # PNET_ARCHS = %alpha%amd64%hppa%i386%ia64%mips%mipsel%powerpc%s390%sparc%
 # ifneq (,$(findstring %$(DEB_HOST_ARCH)%,$(PNET_ARCHS)))
 #   CSHARP = --enable-csharp=pnet
@@ -39,6 +41,12 @@ NOJAVA_ARCHS = %none%
 build:
 	cd debian && $(CC) glibc-test.c
 	debian/a.out
+	sh debian/mk-touch || true
+	touch -d "2014-04-22 09:40:04 UTC" m4/libtool.m4
+	touch -d "2014-07-14 07:30:12 UTC" gettext-runtime/configure
+	touch -d "2014-07-14 07:30:07 UTC" gettext-runtime/libasprintf/configure
+	touch -d "2014-07-14 07:30:23 UTC" gettext-tools/configure
+	touch -d "2014-06-10 06:30:01 UTC" gettext-tools/src/msgfmt.c
 	./configure --prefix=/usr --enable-threads $(CSHARP) \
 		--disable-native-java CC="$(CC)" CFLAGS="$(CFLAGS)" \
 		JAVAC=/usr/lib/jvm/default-java/bin/javac \
@@ -56,13 +64,15 @@ clean:
 	rm -f `find . -name "*~"`
 	rm -rf debian/tmp debian/files* core debian/substvars debian/a.out
 	cd debian && rm -rf gettext-base gettext gettext-el gettext-doc \
-		autopoint libgettextpo0 libasprintf0c2
+		autopoint libgettextpo0 libasprintf0c2 libgettextpo-dev libasprintf-dev
 
 binary-arch: build
 	debian/rules gettext-base
 	debian/rules gettext
 	debian/rules libgettextpo0
 	debian/rules libasprintf0c2
+	debian/rules libgettextpo-dev
+	debian/rules libasprintf-dev
 
 binary-indep: build
 	debian/rules gettext-el
@@ -95,9 +105,11 @@ gettext-base: build
 	fi
 	find debian/$@/usr/share/locale | grep gettext-tools | xargs rm
 ifeq (,$(findstring %$(DEB_HOST_ARCH)%,$(NOJAVA_ARCHS)))
+ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	install -d debian/$@/usr/share/java
 	cp -p debian/tmp/usr/share/gettext/libintl.jar \
 		debian/$@/usr/share/java
+endif
 endif
 	cp -p gettext-tools/ABOUT-NLS debian/$@/usr/share/doc/$@
 	cp -p debian/copyright debian/$@/usr/share/doc/$@
@@ -116,6 +128,7 @@ endif
 		md5sum `find * -type f ! -regex "DEBIAN/.*"` > DEBIAN/md5sums
 	find debian/$@/usr/share/locale -type d -empty | xargs -r rmdir
 	find debian/$@/usr/share/locale -type d -empty | xargs -r rmdir
+	find debian/$@/usr/lib -type d -empty | xargs -r rmdir
 	chown -R 0:0 debian/$@
 	chmod -R u+w,go=rX debian/$@
 	dpkg --build debian/$@ ..
@@ -136,34 +149,32 @@ gettext: build
 	cd debian/$@/usr/share/doc/$@ && gzip -9n changelog changelog.Debian
 	cp -a debian/tmp/usr/bin debian/$@/usr
 	cp -a debian/tmp/usr/lib debian/$@/usr
-	cp -a debian/tmp/usr/include debian/$@/usr
 	cp -a debian/tmp/usr/share/info debian/$@/usr/share
 	cp -a debian/tmp/usr/share/aclocal debian/$@/usr/share
 	cp -a debian/tmp/usr/share/gettext debian/$@/usr/share
 	rm -f debian/$@/usr/share/gettext/libintl.jar
 ifeq (,$(findstring %$(DEB_HOST_ARCH)%,$(NOJAVA_ARCHS)))
+ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	mv debian/$@/usr/share/gettext/gettext.jar debian/$@/usr/share/java
+endif
 endif
 	rm -f debian/$@/usr/lib/GNU.Gettext.dll
 	cp -a debian/tmp/usr/share/man/man1 debian/$@/usr/share/man
 	cp -a debian/tmp/usr/share/locale debian/$@/usr/share
 	find debian/$@/usr/share/locale | grep gettext-runtime | xargs rm
 	cd debian/$@/usr/bin && rm -f gettext ngettext envsubst gettext.sh
-	cd debian/$@/usr/lib && rm -f libasprintf.so.* libgettextpo.so.* *.la
-	install -d debian/$@/usr/lib/$(DEB_HOST_MULTIARCH)
-	cd debian/$@/usr/lib && mv libgettextpo.so $(DEB_HOST_MULTIARCH)
-	cd debian/$@/usr/lib && mv libasprintf.so $(DEB_HOST_MULTIARCH)
+	cd debian/$@/usr/lib && rm -f libasprintf* libgettextpo* *.la
 	cd debian/$@/usr/share/man/man1 && \
 		rm -f gettext.1 ngettext.1 envsubst.1
 	cd debian/$@/usr/lib && chmod 644 libgettextlib* libgettextsrc*
 	$(STRIP) debian/$@/usr/lib/preloadable_libintl.so
 	$(STRIP) debian/$@/usr/lib/libgettextlib*.so
 	$(STRIP) debian/$@/usr/lib/libgettextsrc*.so
-	$(ATRIP) debian/$@/usr/lib/libasprintf.a
-	$(ATRIP) debian/$@/usr/lib/libgettextpo.a
 	rm -f debian/$@/usr/bin/autopoint
 	rm -f debian/$@/usr/share/man/man1/autopoint.1
-	rm -f debian/$@/usr/share/gettext/archive.git.tar.gz
+	rm -f debian/$@/usr/share/gettext/archive.dir.tar.xz
+	rm -f debian/$@/usr/lib/libgettextlib.so
+	rm -f debian/$@/usr/lib/libgettextsrc.so
 	gzip -9n debian/$@/usr/share/info/*
 	gzip -r9n debian/$@/usr/share/man
 	$(STRIP) `sh debian/elf debian/$@/usr/bin/* debian/$@/usr/lib/gettext/*`
@@ -212,6 +223,46 @@ libasprintf0c2: build
 	cd debian/$@/usr/lib/$(DEB_HOST_MULTIARCH) && chmod 644 libasprintf*
 	$(STRIP) debian/$@/usr/lib/$(DEB_HOST_MULTIARCH)/libasprintf.so.*
 	dpkg-shlibdeps `sh debian/elf debian/$@/usr/lib/$(DEB_HOST_MULTIARCH)/*`
+	dpkg-gencontrol -p$@ -Pdebian/$@
+	cd debian/$@ && \
+		md5sum `find * -type f ! -regex "DEBIAN/.*"` > DEBIAN/md5sums
+	chown -R 0:0 debian/$@
+	chmod -R u+w,go=rX debian/$@
+	dpkg --build debian/$@ ..
+
+libgettextpo-dev: build
+	rm -rf debian/$@
+	install -d debian/$@/DEBIAN debian/$@/usr/share/doc/$@
+	cp -p debian/copyright debian/$@/usr/share/doc/$@
+	cp -p ChangeLog debian/$@/usr/share/doc/$@/changelog
+	cp -p debian/changelog debian/$@/usr/share/doc/$@/changelog.Debian
+	cd debian/$@/usr/share/doc/$@ && gzip -9n changelog changelog.Debian
+	install -d debian/$@/usr/lib/$(DEB_HOST_MULTIARCH)
+	cp -a debian/tmp/usr/lib/libgettextpo.a debian/$@/usr/lib/$(DEB_HOST_MULTIARCH)
+	cp -a debian/tmp/usr/lib/libgettextpo.so debian/$@/usr/lib/$(DEB_HOST_MULTIARCH)
+	install -d debian/$@/usr/include
+	cp -a debian/tmp/usr/include/gettext-po.h debian/$@/usr/include
+	$(ATRIP) debian/$@/usr/lib/$(DEB_HOST_MULTIARCH)/libgettextpo.a
+	dpkg-gencontrol -p$@ -Pdebian/$@
+	cd debian/$@ && \
+		md5sum `find * -type f ! -regex "DEBIAN/.*"` > DEBIAN/md5sums
+	chown -R 0:0 debian/$@
+	chmod -R u+w,go=rX debian/$@
+	dpkg --build debian/$@ ..
+
+libasprintf-dev: build
+	rm -rf debian/$@
+	install -d debian/$@/DEBIAN debian/$@/usr/share/doc/$@
+	cp -p debian/copyright debian/$@/usr/share/doc/$@
+	cp -p ChangeLog debian/$@/usr/share/doc/$@/changelog
+	cp -p debian/changelog debian/$@/usr/share/doc/$@/changelog.Debian
+	cd debian/$@/usr/share/doc/$@ && gzip -9n changelog changelog.Debian
+	install -d debian/$@/usr/lib/$(DEB_HOST_MULTIARCH)
+	cp -a debian/tmp/usr/lib/libasprintf.a debian/$@/usr/lib/$(DEB_HOST_MULTIARCH)
+	cp -a debian/tmp/usr/lib/libasprintf.so debian/$@/usr/lib/$(DEB_HOST_MULTIARCH)
+	install -d debian/$@/usr/include
+	cp -a debian/tmp/usr/include/autosprintf.h debian/$@/usr/include
+	$(ATRIP) debian/$@/usr/lib/$(DEB_HOST_MULTIARCH)/libasprintf.a
 	dpkg-gencontrol -p$@ -Pdebian/$@
 	cd debian/$@ && \
 		md5sum `find * -type f ! -regex "DEBIAN/.*"` > DEBIAN/md5sums
@@ -275,7 +326,7 @@ autopoint:
 	install -d debian/$@/DEBIAN debian/$@/usr/share/doc/$@
 	cd debian/$@ && install -d usr/bin usr/share/gettext usr/share/man/man1
 	cp -p debian/tmp/usr/bin/autopoint debian/$@/usr/bin
-	cp -p debian/tmp/usr/share/gettext/archive.git.tar.gz \
+	cp -p debian/tmp/usr/share/gettext/archive.dir.tar.xz \
 		debian/$@/usr/share/gettext
 	cp -p debian/tmp/usr/share/man/man1/autopoint.1 \
 		debian/$@/usr/share/man/man1
@@ -298,4 +349,4 @@ build-arch: build
 build-indep: build
 
 .PHONY: binary binary-arch binary-indep build-arch build-indep clean
-.PHONY: gettext-base gettext gettext-el gettext-doc autopoint libgettextpo0 libasprintf0c2
+.PHONY: gettext-base gettext gettext-el gettext-doc autopoint libgettextpo0 libasprintf0c2 libgettextpo-dev libasprintf-dev

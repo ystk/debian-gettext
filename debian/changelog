@@ -1,3 +1,109 @@
+gettext (0.19.2-1) unstable; urgency=low
+
+  * New upstream release. Closes: #755221.
+  * Dropped unused lintian overrides.
+  * Dropped 05-quotes-around-pwd-in-project-id. Adopted upstream.
+  * Use upstream tar.xz which is a lot smaller than tar.gz.
+  * Added gettext-tools/src/msgfmt.c to the list of files
+    touched by debian/rules, as we don't modify it so much
+    that msgfmt.1 or msgfmt.1.html need to be regenerated.
+    This will avoid a build dependency on groff (for now).
+
+ -- Santiago Vila <sanvila@debian.org>  Thu, 24 Jul 2014 15:38:00 +0200
+
+gettext (0.18.3.2-4) unstable; urgency=medium
+
+  * Made gettext-el to depend on emacs, not emacs23. Closes: #754014.
+  * Applied Ubuntu patch for little-endian powerpc. Closes: #754146.
+    This would result in extra build-dependencies (autoconf) because
+    of the timestamps, so we keep them in debian/rules before build.
+
+ -- Santiago Vila <sanvila@debian.org>  Thu, 17 Jul 2014 11:17:00 +0200
+
+gettext (0.18.3.2-3) unstable; urgency=medium
+
+  * Added "Multi-Arch: foreign" to autopoint, to be used in cross-build
+    environments. Closes: #753003. Thanks to Helmut Grohne.
+  * Do not ship an empty usr/lib in gettext-base.
+
+ -- Santiago Vila <sanvila@debian.org>  Mon, 30 Jun 2014 10:01:24 +0200
+
+gettext (0.18.3.2-2) unstable; urgency=low
+
+  * Updated build profile to use DEB_BUILD_PROFILES. Closes: #750044.
+    Thanks a lot to Wookey for the patch.
+
+ -- Santiago Vila <sanvila@debian.org>  Sun, 01 Jun 2014 11:02:52 +0200
+
+gettext (0.18.3.2-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Dropped 07-disable-m4-include-when-tracing.
+
+ -- Santiago Vila <sanvila@debian.org>  Thu, 16 Jan 2014 16:17:04 +0100
+
+gettext (0.18.3.1-2) unstable; urgency=medium
+
+  * Fixed autopoint problem that made coreutils build to fail.
+    Patch by Daiki Ueno. Closes: #730321.
+
+ -- Santiago Vila <sanvila@debian.org>  Wed, 27 Nov 2013 19:03:16 +0100
+
+gettext (0.18.3.1-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Santiago Vila <sanvila@debian.org>  Sat, 17 Aug 2013 16:00:06 +0200
+
+gettext (0.18.3-1) unstable; urgency=low
+
+  * New upstream release.
+  * xgettext now partially supports JavaScript. Closes: #590724.
+  * xgettext and msgfmt's format string checking now recognize Python
+    format string in braced syntax (PEP 3101). Closes: #668226.
+
+ -- Santiago Vila <sanvila@debian.org>  Tue, 16 Jul 2013 11:32:34 +0200
+
+gettext (0.18.2.1-1) unstable; urgency=low
+
+  * New upstream release.
+  * Changed Depends on libasprintf-dev and libgettextpo-dev to Recommends.
+  * Drop libgettextlib.so and libgettextsrc.so, as those libraries are
+    for internal use only and not meant to be used by other packages.
+  * The infrastructure archive now uses xz compression. Closes: #660391.
+    Changed Depends and Build-Depends accordingly.
+  * Modified debian/rules to support bootstrapping. Closes: #709559.
+  * Deprecated macro AM_PROG_MKDIR_P not used anymore. Closes: #709740.
+  * Review of patches in debian/patches:
+  * 01-do-not-use-java-in-urlget. Kept.
+  * 02-no-usr-share-info-dir-gz. Dropped in favour of AM_UPDATE_INFO_DIR.
+  * 03-fix-xgettext-crash. Dropped. Now upstream.
+  * 04-new-scheme-syntax. Dropped. Now upstream.
+  * 05-quotes-around-pwd-in-project-id. Kept.
+  * 06-msgfmt-default-little-endian. Kept.
+  * 07-eglibc-21.6-ftbfs-nogets. Dropped. Obsolete.
+  * 99-config-guess-config-sub. Updated.
+
+ -- Santiago Vila <sanvila@debian.org>  Thu, 30 May 2013 18:37:30 +0200
+
+gettext (0.18.1.1-10) unstable; urgency=low
+
+  * Split out libgettextpo-dev and libasprintf-dev for multiarch
+    dependencies. Thanks to P.J McDermott for core patch. Closes: #683751.
+  * Fix FTBFS on eglibc-2.16 (gets removal/outdated gnulib). Closes: #693361.
+  * Thanks a lot to Colin Watson and Wookey, as they did all the work.
+  * Keep autosprintf.info.gz in gettext for now, for safety.
+  * Note: This is a "conservative release" which tries to be nice with
+    autobuilders using unstable. After the release of wheezy, the following
+    changes will be made: a) Change gettext Depends on the new -dev packages
+    to just Recommends, and b) Drop libgettextsrc.so and libgettextlib.so,
+    as those libraries are for internal use only and not meant to be used
+    by other packages. Those changes will be made *regardless* of this release
+    entering wheezy or not. Debian derivatives (like Ubuntu) are welcome to
+    do them now, as it is what will eventually happen in Debian.
+
+ -- Santiago Vila <sanvila@debian.org>  Wed, 28 Nov 2012 17:14:44 +0100
+
 gettext (0.18.1.1-9) unstable; urgency=low
 
   * Build with hardened build flags.
