@@ -1,5 +1,5 @@
 /* Temporary directories and temporary files with automatic cleanup.
-   Copyright (C) 2001, 2003, 2006-2007, 2009-2010 Free Software Foundation,
+   Copyright (C) 2001, 2003, 2006-2007, 2009-2014 Free Software Foundation,
    Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2006.
 
@@ -59,24 +59,14 @@
 
 #define _(str) gettext (str)
 
-/* GNU Hurd doesn't have PATH_MAX.  */
+/* GNU Hurd doesn't have PATH_MAX.  Use a fallback.
+   Temporary directory names are usually not that long.  */
 #ifndef PATH_MAX
-# ifdef MAXPATHLEN
-#  define PATH_MAX MAXPATHLEN
-# else
-#  define PATH_MAX 1024
-# endif
+# define PATH_MAX 1024
 #endif
 
 #ifndef uintptr_t
 # define uintptr_t unsigned long
-#endif
-
-#if !GNULIB_FCNTL_SAFER
-/* The results of open() in this file are not used with fchdir,
-   therefore save some unnecessary work in fchdir.c.  */
-# undef open
-# undef close
 #endif
 
 
@@ -559,7 +549,10 @@ cleanup_temp_dir (struct temp_dir *dir)
           }
         else
           cleanup_list.tempdir_list[i] = NULL;
-        /* Now only we can free the tmpdir->dirname and tmpdir itself.  */
+        /* Now only we can free the tmpdir->dirname, tmpdir->subdirs,
+           tmpdir->files, and tmpdir itself.  */
+        gl_list_free (tmpdir->files);
+        gl_list_free (tmpdir->subdirs);
         free (tmpdir->dirname);
         free (tmpdir);
         return err;
@@ -585,6 +578,11 @@ supports_delete_on_close ()
   if (!known)
     {
       OSVERSIONINFO v;
+
+      /* According to
+         <http://msdn.microsoft.com/en-us/library/windows/desktop/ms724451(v=vs.85).aspx>
+         this structure must be initialised as follows:  */
+      v.dwOSVersionInfoSize = sizeof (OSVERSIONINFO);
 
       if (GetVersionEx (&v))
         known = (v.dwPlatformId == VER_PLATFORM_WIN32_NT ? 1 : -1);

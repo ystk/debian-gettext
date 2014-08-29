@@ -1,5 +1,5 @@
 /* List of exported symbols of libgettextsrc on Cygwin.
-   Copyright (C) 2006-2007, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2006-2007, 2009, 2011 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2006.
 
    This program is free software: you can redistribute it and/or modify
@@ -15,10 +15,15 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #include "woe32dll/export.h"
 
 VARIABLE(allow_duplicates)
 VARIABLE(color_mode)
+VARIABLE(color_test_mode)
 VARIABLE(format_language)
 VARIABLE(format_language_pretty)
 VARIABLE(formatstring_awk)
@@ -29,9 +34,11 @@ VARIABLE(formatstring_elisp)
 VARIABLE(formatstring_gcc_internal)
 VARIABLE(formatstring_gfc_internal)
 VARIABLE(formatstring_java)
+VARIABLE(formatstring_javascript)
 VARIABLE(formatstring_kde)
 VARIABLE(formatstring_librep)
 VARIABLE(formatstring_lisp)
+VARIABLE(formatstring_lua)
 VARIABLE(formatstring_objc)
 VARIABLE(formatstring_parsers)
 VARIABLE(formatstring_pascal)
@@ -39,6 +46,7 @@ VARIABLE(formatstring_perl)
 VARIABLE(formatstring_perl_brace)
 VARIABLE(formatstring_php)
 VARIABLE(formatstring_python)
+VARIABLE(formatstring_python_brace)
 VARIABLE(formatstring_qt)
 VARIABLE(formatstring_qt_plural)
 VARIABLE(formatstring_scheme)
@@ -52,7 +60,6 @@ VARIABLE(input_format_po)
 VARIABLE(input_format_properties)
 VARIABLE(input_format_stringtable)
 VARIABLE(less_than)
-VARIABLE(line_comment)
 VARIABLE(more_than)
 VARIABLE(msgcomm_mode)
 VARIABLE(omit_header)
@@ -68,7 +75,9 @@ VARIABLE(po_error)
 VARIABLE(po_error_at_line)
 VARIABLE(po_gram_lval)
 VARIABLE(po_lex_charset)
+#if HAVE_ICONV
 VARIABLE(po_lex_iconv)
+#endif
 VARIABLE(po_lex_weird_cjk)
 VARIABLE(po_multiline_error)
 VARIABLE(po_multiline_warning)

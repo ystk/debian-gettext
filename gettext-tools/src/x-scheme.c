@@ -1,5 +1,5 @@
 /* xgettext Scheme backend.
-   Copyright (C) 2004-2009 Free Software Foundation, Inc.
+   Copyright (C) 2004-2009, 2011 Free Software Foundation, Inc.
 
    This file was written by Bruno Haible <bruno@clisp.org>, 2004-2005.
 
@@ -40,7 +40,7 @@
 
 
 /* The Scheme syntax is described in R5RS.  It is implemented in
-   guile-1.6.4/libguile/read.c.
+   guile-2.0.0/libguile/read.c.
    Since we are interested only in strings and in forms similar to
         (gettext msgid ...)
    or   (ngettext msgid msgid_plural ...)
@@ -60,7 +60,7 @@
    - The syntax code assigned to each character, and how tokens are built
      up from characters (single escape, multiple escape etc.).
 
-   - Comment syntax: ';' and '#! ... \n!#\n'.
+   - Comment syntax: ';' and '#! ... !#' and '#| ... |#' (may be nested).
 
    - String syntax: "..." with single escapes.
 
@@ -498,7 +498,6 @@ is_number (const struct token *tp)
 {
   const char *str = tp->chars;
   int len = tp->charcount;
-  int radix = 10;
   enum { unknown, exact, inexact } exactness = unknown;
   bool seen_radix_prefix = false;
   bool seen_exactness_prefix = false;
@@ -513,25 +512,21 @@ is_number (const struct token *tp)
         case 'B': case 'b':
           if (seen_radix_prefix)
             return false;
-          radix = 2;
           seen_radix_prefix = true;
           break;
         case 'O': case 'o':
           if (seen_radix_prefix)
             return false;
-          radix = 8;
           seen_radix_prefix = true;
           break;
         case 'D': case 'd':
           if (seen_radix_prefix)
             return false;
-          radix = 10;
           seen_radix_prefix = true;
           break;
         case 'X': case 'x':
           if (seen_radix_prefix)
             return false;
-          radix = 16;
           seen_radix_prefix = true;
           break;
         case 'E': case 'e':
@@ -682,6 +677,7 @@ read_object (struct object *op, flag_context_ty outer_context)
   for (;;)
     {
       int c = do_getc ();
+      bool seen_underscore_prefix = false;
 
       switch (c)
         {
@@ -935,26 +931,120 @@ read_object (struct object *op, flag_context_ty outer_context)
                 }
 
               case '!':
-                /* Block comment '#! ... \n!#\n'.  We don't extract it
-                   because it's only used to introduce scripts on Unix.  */
+                /* Block comment '#! ... !#'.  See
+                   <http://www.gnu.org/software/guile/manual/html_node/Block-Comments.html>.  */
                 {
-                  int last1 = 0;
-                  int last2 = 0;
-                  int last3 = 0;
+                  int c;
 
+                  comment_start ();
+                  c = do_getc ();
                   for (;;)
                     {
-                      c = do_getc ();
                       if (c == EOF)
-                        /* EOF is not allowed here.  But be tolerant.  */
                         break;
-                      if (last3 == '\n' && last2 == '!' && last1 == '#'
-                          && c == '\n')
-                        break;
-                      last3 = last2;
-                      last2 = last1;
-                      last1 = c;
+                      if (c == '!')
+                        {
+                          c = do_getc ();
+                          if (c == EOF)
+                            break;
+                          if (c == '#')
+                            {
+                              comment_line_end (0);
+                              break;
+                            }
+                          else
+                            comment_add ('!');
+                        }
+                      else
+                        {
+                          /* We skip all leading white space.  */
+                          if (!(buflen == 0 && (c == ' ' || c == '\t')))
+                            comment_add (c);
+                          if (c == '\n')
+                            {
+                              comment_line_end (1);
+                              comment_start ();
+                            }
+                          c = do_getc ();
+                        }
                     }
+                  if (c == EOF)
+                    {
+                      /* EOF not allowed here.  But be tolerant.  */
+                      op->type = t_eof;
+                      return;
+                    }
+                  last_comment_line = line_number;
+                  continue;
+                }
+
+              case '|':
+                /* Block comment '#| ... |#'.  See
+                   <http://www.gnu.org/software/guile/manual/html_node/Block-Comments.html>
+                   and <http://srfi.schemers.org/srfi-30/srfi-30.html>.  */
+                {
+                  int depth = 0;
+                  int c;
+
+                  comment_start ();
+                  c = do_getc ();
+                  for (;;)
+                    {
+                      if (c == EOF)
+                        break;
+                      if (c == '|')
+                        {
+                          c = do_getc ();
+                          if (c == EOF)
+                            break;
+                          if (c == '#')
+                            {
+                              if (depth == 0)
+                                {
+                                  comment_line_end (0);
+                                  break;
+                                }
+                              depth--;
+                              comment_add ('|');
+                              comment_add ('#');
+                              c = do_getc ();
+                            }
+                          else
+                            comment_add ('|');
+                        }
+                      else if (c == '#')
+                        {
+                          c = do_getc ();
+                          if (c == EOF)
+                            break;
+                          comment_add ('#');
+                          if (c == '|')
+                            {
+                              depth++;
+                              comment_add ('|');
+                              c = do_getc ();
+                            }
+                        }
+                      else
+                        {
+                          /* We skip all leading white space.  */
+                          if (!(buflen == 0 && (c == ' ' || c == '\t')))
+                            comment_add (c);
+                          if (c == '\n')
+                            {
+                              comment_line_end (1);
+                              comment_start ();
+                            }
+                          c = do_getc ();
+                        }
+                    }
+                  if (c == EOF)
+                    {
+                      /* EOF not allowed here.  But be tolerant.  */
+                      op->type = t_eof;
+                      return;
+                    }
+                  last_comment_line = line_number;
                   continue;
                 }
 
@@ -1073,6 +1163,33 @@ read_object (struct object *op, flag_context_ty outer_context)
             abort ();
           }
 
+        case '_':
+          /* GIMP script-fu extension: '_' before a string literal is
+             considered a gettext call on the string.  */
+          {
+            int c = do_getc ();
+            if (c == EOF)
+              /* Invalid input.  Be tolerant, no error message.  */
+              {
+                op->type = t_other;
+                return;
+              }
+            if (c != '"')
+              {
+                do_ungetc (c);
+
+                /* If '_' is not followed by a string literal,
+                   consider it a part of symbol.  */
+                op->token = XMALLOC (struct token);
+                read_token (op->token, '_');
+                op->type = t_symbol;
+                last_non_comment_line = line_number;
+                return;
+              }
+            seen_underscore_prefix = true;
+          }
+          /*FALLTHROUGH*/
+
         case '"':
           {
             op->token = XMALLOC (struct token);
@@ -1126,7 +1243,7 @@ read_object (struct object *op, flag_context_ty outer_context)
               }
             op->type = t_string;
 
-            if (extract_all)
+            if (seen_underscore_prefix || extract_all)
               {
                 lex_pos_ty pos;
 

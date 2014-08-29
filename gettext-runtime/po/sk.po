@@ -1,15 +1,15 @@
 # Slovak translations for GNU gettext-runtime package.
-# Copyright (C) 1999, 2001, 2002, 2003, 2004, 2007, 2008, 2010 Free Software Foundation, Inc.
+# Copyright (C) 1999, 2001, 2002, 2003, 2004, 2007, 2008, 2010, 2013 Free Software Foundation, Inc.
 # This file is distributed under the same license as the gettext package.
 # Štefan Ondrejička <ondrej@idata.sk>, 1999.
-# Marcel Telka <marcel@telka.sk>, 2001, 2002, 2003, 2004, 2007, 2008, 2010.
+# Marcel Telka <marcel@telka.sk>, 2001, 2002, 2003, 2004, 2007, 2008, 2010, 2013.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: GNU gettext-runtime 0.18\n"
+"Project-Id-Version: GNU gettext-runtime 0.18.2\n"
 "Report-Msgid-Bugs-To: bug-gnu-gettext@gnu.org\n"
-"POT-Creation-Date: 2010-06-04 01:57+0200\n"
-"PO-Revision-Date: 2010-05-10 14:03+0200\n"
+"POT-Creation-Date: 2014-07-14 16:32+0900\n"
+"PO-Revision-Date: 2013-10-02 06:40+0200\n"
 "Last-Translator: Marcel Telka <marcel@telka.sk>\n"
 "Language-Team: Slovak <sk-i18n@lists.linux.sk>\n"
 "Language: sk\n"
@@ -22,62 +22,62 @@ msgstr ""
 msgid "write error"
 msgstr "chyba zápisu"
 
-#: gnulib-lib/error.c:181
+#: gnulib-lib/error.c:191
 msgid "Unknown system error"
 msgstr "Neznáma systémová chyba"
 
-#: gnulib-lib/getopt.c:527 gnulib-lib/getopt.c:543
+#: gnulib-lib/getopt.c:547 gnulib-lib/getopt.c:576
 #, c-format
-msgid "%s: option '%s' is ambiguous\n"
-msgstr "%s: voľba '%s' nie je jednoznačná\n"
+msgid "%s: option '%s' is ambiguous; possibilities:"
+msgstr "%s: voľba '%s' nie je jednoznačná; možnosti:"
 
-#: gnulib-lib/getopt.c:576 gnulib-lib/getopt.c:580
+#: gnulib-lib/getopt.c:624 gnulib-lib/getopt.c:628
 #, c-format
 msgid "%s: option '--%s' doesn't allow an argument\n"
 msgstr "%s: voľba '--%s' nepovoľuje parameter\n"
 
-#: gnulib-lib/getopt.c:589 gnulib-lib/getopt.c:594
+#: gnulib-lib/getopt.c:637 gnulib-lib/getopt.c:642
 #, c-format
 msgid "%s: option '%c%s' doesn't allow an argument\n"
 msgstr "%s: voľba '%c%s' nepovoľuje parameter\n"
 
-#: gnulib-lib/getopt.c:637 gnulib-lib/getopt.c:656
+#: gnulib-lib/getopt.c:685 gnulib-lib/getopt.c:704
 #, c-format
 msgid "%s: option '--%s' requires an argument\n"
 msgstr "%s: voľba '--%s' vyžaduje parameter\n"
 
-#: gnulib-lib/getopt.c:694 gnulib-lib/getopt.c:697
+#: gnulib-lib/getopt.c:742 gnulib-lib/getopt.c:745
 #, c-format
 msgid "%s: unrecognized option '--%s'\n"
 msgstr "%s: neznáma voľba '--%s'\n"
 
-#: gnulib-lib/getopt.c:705 gnulib-lib/getopt.c:708
+#: gnulib-lib/getopt.c:753 gnulib-lib/getopt.c:756
 #, c-format
 msgid "%s: unrecognized option '%c%s'\n"
 msgstr "%s: neznáma voľba '%c%s'\n"
 
-#: gnulib-lib/getopt.c:757 gnulib-lib/getopt.c:760
+#: gnulib-lib/getopt.c:805 gnulib-lib/getopt.c:808
 #, c-format
 msgid "%s: invalid option -- '%c'\n"
 msgstr "%s: neplatná voľba -- '%c'\n"
 
-#: gnulib-lib/getopt.c:810 gnulib-lib/getopt.c:827 gnulib-lib/getopt.c:1035
-#: gnulib-lib/getopt.c:1053
+#: gnulib-lib/getopt.c:861 gnulib-lib/getopt.c:878 gnulib-lib/getopt.c:1088
+#: gnulib-lib/getopt.c:1106
 #, c-format
 msgid "%s: option requires an argument -- '%c'\n"
 msgstr "%s: voľba vyžaduje parameter -- '%c'\n"
 
-#: gnulib-lib/getopt.c:883 gnulib-lib/getopt.c:899
+#: gnulib-lib/getopt.c:934 gnulib-lib/getopt.c:950
 #, c-format
 msgid "%s: option '-W %s' is ambiguous\n"
 msgstr "%s: voľba '-W %s' nie je jednoznačná\n"
 
-#: gnulib-lib/getopt.c:923 gnulib-lib/getopt.c:941
+#: gnulib-lib/getopt.c:974 gnulib-lib/getopt.c:992
 #, c-format
 msgid "%s: option '-W %s' doesn't allow an argument\n"
 msgstr "%s: voľba '-W %s' nepovoľuje parameter\n"
 
-#: gnulib-lib/getopt.c:962 gnulib-lib/getopt.c:980
+#: gnulib-lib/getopt.c:1013 gnulib-lib/getopt.c:1031
 #, c-format
 msgid "%s: option '-W %s' requires an argument\n"
 msgstr "%s: voľba '-W %s' vyžaduje parameter\n"
@@ -122,8 +122,8 @@ msgstr "chýbajúce parametre"
 
 #: src/envsubst.c:171 src/gettext.c:238 src/ngettext.c:207
 #, c-format
-msgid "Try `%s --help' for more information.\n"
-msgstr "Skúste `%s --help' a dozviete sa viac informácií.\n"
+msgid "Try '%s --help' for more information.\n"
+msgstr "Skúste '%s --help' a dozviete sa viac informácií.\n"
 
 #: src/envsubst.c:176
 #, c-format, no-wrap
@@ -255,7 +255,7 @@ msgid ""
 "environment variable TEXTDOMAIN.  If the message catalog is not found in the\n"
 "regular directory, another location can be specified with the environment\n"
 "variable TEXTDOMAINDIR.\n"
-"When used with the -s option the program behaves like the `echo' command.\n"
+"When used with the -s option the program behaves like the 'echo' command.\n"
 "But it does not simply copy its arguments to stdout.  Instead those messages\n"
 "found in the selected catalog are translated.\n"
 "Standard search directory: %s\n"
@@ -263,7 +263,7 @@ msgstr ""
 "Ak nie je zadaný parameter DOMÉNA, doména bude prevzatá z premennej prostredia\n"
 "TEXTDOMAIN. Ak sa katalóg správ nenachádza v obvyklom adresári, iný adresár\n"
 "môže byť určený obsahom premennej prostredia TEXTDOMAINDIR.\n"
-"Ak je program použitý s voľbou -s, bude sa správať ako príkaz `echo'.\n"
+"Ak je program použitý s voľbou -s, bude sa správať ako príkaz 'echo'.\n"
 "Nevypíše však svoje parametre na štandardný výstup. Namiesto toho správy,\n"
 "ktoré sa nachádzajú vo vybranom katalógu správ budú preložené.\n"
 "Štandardný adresár, v ktorom sa budú hľadať katalógy: %s\n"

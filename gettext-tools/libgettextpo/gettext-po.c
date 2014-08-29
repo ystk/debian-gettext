@@ -1,5 +1,5 @@
 /* Public API for GNU gettext PO files.
-   Copyright (C) 2003-2009 Free Software Foundation, Inc.
+   Copyright (C) 2003-2010 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2003.
 
    This program is free software: you can redistribute it and/or modify
@@ -392,7 +392,6 @@ po_header_set_field (const char *header, const char *field, const char *value)
           {
             const char *oldvalue_start;
             const char *oldvalue_end;
-            size_t oldvalue_len;
             size_t header_part1_len;
             size_t header_part3_len;
             size_t result_len;
@@ -404,7 +403,6 @@ po_header_set_field (const char *header, const char *field, const char *value)
             oldvalue_end = strchr (oldvalue_start, '\n');
             if (oldvalue_end == NULL)
               oldvalue_end = oldvalue_start + strlen (oldvalue_start);
-            oldvalue_len = oldvalue_end - oldvalue_start;
 
             header_part1_len = oldvalue_start - header;
             header_part3_len = header + header_len - oldvalue_end;
@@ -522,7 +520,7 @@ po_message_create (void)
 {
   lex_pos_ty pos = { NULL, 0 };
 
-  return (po_message_t) message_alloc (NULL, NULL, NULL, NULL, 0, &pos);
+  return (po_message_t) message_alloc (NULL, NULL, NULL, xstrdup (""), 1, &pos);
 }
 
 
@@ -1103,7 +1101,7 @@ po_message_is_range (po_message_t message, int *minp, int *maxp)
   if (has_range_p (mp->range))
     {
       *minp = mp->range.min;
-      *minp = mp->range.max;
+      *maxp = mp->range.max;
       return 1;
     }
   else
@@ -1215,7 +1213,7 @@ po_file_check_all (po_file_t file, po_xerror_handler_t handler)
 
   mdlp = file->mdlp;
   for (k = 0; k < mdlp->nitems; k++)
-    check_message_list (mdlp->item[k]->messages, 1, 1, 1, 0, 0, 0);
+    check_message_list (mdlp->item[k]->messages, 1, 1, 1, 1, 1, 0, 0, 0);
 
   /* Restore error handler.  */
   po_xerror  = textmode_xerror;
@@ -1276,7 +1274,7 @@ po_message_check_all (po_message_t message, po_message_iterator_t iterator,
       if (mp != header)
         message_list_append (&ml, mp);
 
-      check_message_list (&ml, 1, 1, 1, 0, 0, 0);
+      check_message_list (&ml, 1, 1, 1, 1, 1, 0, 0, 0);
     }
   }
 

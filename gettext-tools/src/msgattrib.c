@@ -1,5 +1,5 @@
 /* Manipulates attributes of messages in translation catalogs.
-   Copyright (C) 2001-2007, 2009-2010 Free Software Foundation, Inc.
+   Copyright (C) 2001-2007, 2009-2010, 2012 Free Software Foundation, Inc.
    Written by Bruno Haible <haible@clisp.cons.org>, 2001.
 
    This program is free software: you can redistribute it and/or modify
@@ -44,6 +44,7 @@
 #include "write-stringtable.h"
 #include "color.h"
 #include "propername.h"
+#include "xalloc.h"
 #include "gettext.h"
 
 #define _(str) gettext (str)
@@ -71,17 +72,20 @@ enum
   RESET_FUZZY           = 1 << 1,
   SET_OBSOLETE          = 1 << 2,
   RESET_OBSOLETE        = 1 << 3,
-  REMOVE_PREV           = 1 << 4
+  REMOVE_PREV           = 1 << 4,
+  ADD_PREV              = 1 << 5,
+  REMOVE_TRANSLATION    = 1 << 6
 };
 static int to_change;
 
 /* Long options.  */
 static const struct option long_options[] =
 {
-  { "add-location", no_argument, &line_comment, 1 },
+  { "add-location", optional_argument, NULL, 'n' },
   { "clear-fuzzy", no_argument, NULL, CHAR_MAX + 8 },
   { "clear-obsolete", no_argument, NULL, CHAR_MAX + 10 },
   { "clear-previous", no_argument, NULL, CHAR_MAX + 18 },
+  { "empty", no_argument, NULL, CHAR_MAX + 23 },
   { "color", optional_argument, NULL, CHAR_MAX + 19 },
   { "directory", required_argument, NULL, 'D' },
   { "escape", no_argument, NULL, 'E' },
@@ -92,7 +96,7 @@ static const struct option long_options[] =
   { "indent", no_argument, NULL, 'i' },
   { "no-escape", no_argument, NULL, 'e' },
   { "no-fuzzy", no_argument, NULL, CHAR_MAX + 3 },
-  { "no-location", no_argument, &line_comment, 0 },
+  { "no-location", no_argument, NULL, CHAR_MAX + 22 },
   { "no-obsolete", no_argument, NULL, CHAR_MAX + 5 },
   { "no-wrap", no_argument, NULL, CHAR_MAX + 13 },
   { "obsolete", no_argument, NULL, CHAR_MAX + 12 },
@@ -100,6 +104,7 @@ static const struct option long_options[] =
   { "only-fuzzy", no_argument, NULL, CHAR_MAX + 4 },
   { "only-obsolete", no_argument, NULL, CHAR_MAX + 6 },
   { "output-file", required_argument, NULL, 'o' },
+  { "previous", no_argument, NULL, CHAR_MAX + 21 },
   { "properties-input", no_argument, NULL, 'P' },
   { "properties-output", no_argument, NULL, 'p' },
   { "set-fuzzy", no_argument, NULL, CHAR_MAX + 7 },
@@ -204,7 +209,8 @@ main (int argc, char **argv)
         break;
 
       case 'n':
-        line_comment = 1;
+        if (handle_filepos_comment_option (optarg))
+          usage (EXIT_FAILURE);
         break;
 
       case 'o':
@@ -324,6 +330,18 @@ main (int argc, char **argv)
         handle_style_option (optarg);
         break;
 
+      case CHAR_MAX + 21: /* --previous */
+        to_change |= ADD_PREV;
+        break;
+
+      case CHAR_MAX + 22: /* --no-location */
+        message_print_style_filepos (filepos_comment_none);
+        break;
+
+      case CHAR_MAX + 23: /* --empty */
+        to_change |= REMOVE_TRANSLATION;
+        break;
+
       default:
         usage (EXIT_FAILURE);
         /* NOTREACHED */
@@ -360,10 +378,6 @@ There is NO WARRANTY, to the extent permitted by law.\n\
     }
 
   /* Verify selected options.  */
-  if (!line_comment && sort_by_filepos)
-    error (EXIT_FAILURE, 0, _("%s and %s are mutually exclusive"),
-           "--no-location", "--sort-by-file");
-
   if (sort_by_msgid && sort_by_filepos)
     error (EXIT_FAILURE, 0, _("%s and %s are mutually exclusive"),
            "--sort-output", "--sort-by-file");
@@ -400,7 +414,7 @@ static void
 usage (int status)
 {
   if (status != EXIT_SUCCESS)
-    fprintf (stderr, _("Try `%s --help' for more information.\n"),
+    fprintf (stderr, _("Try '%s --help' for more information.\n"),
              program_name);
   else
     {
@@ -459,7 +473,12 @@ Attribute manipulation:\n"));
       printf (_("\
       --clear-obsolete        set all messages non-obsolete\n"));
       printf (_("\
+      --previous              when setting 'fuzzy', keep previous msgids\n\
+                              of translated messages.\n"));
+      printf (_("\
       --clear-previous        remove the \"previous msgid\" from all messages\n"));
+      printf (_("\
+      --empty                 when removing 'fuzzy', also set msgstr empty\n"));
       printf (_("\
       --only-file=FILE.po     manipulate only entries listed in FILE.po\n"));
       printf (_("\
@@ -587,9 +606,42 @@ process_message_list (message_list_ty *mlp,
                   : true))
             {
               if (to_change & SET_FUZZY)
-                mp->is_fuzzy = true;
+                {
+                  if ((to_change & ADD_PREV) && !is_header (mp)
+                      && !mp->is_fuzzy && mp->msgstr[0] != '\0')
+                    {
+                      mp->prev_msgctxt =
+                        (mp->msgctxt != NULL ? xstrdup (mp->msgctxt) : NULL);
+                      mp->prev_msgid =
+                        (mp->msgid != NULL ? xstrdup (mp->msgid) : NULL);
+                      mp->prev_msgid_plural =
+                        (mp->msgid_plural != NULL
+                         ? xstrdup (mp->msgid_plural)
+                         : NULL);
+                    }
+                  mp->is_fuzzy = true;
+                }
+
               if (to_change & RESET_FUZZY)
-                mp->is_fuzzy = false;
+                {
+                  if ((to_change & REMOVE_TRANSLATION)
+                      && mp->is_fuzzy && !mp->obsolete)
+                    {
+                      unsigned long int nplurals = 0;
+                      char *msgstr;
+                      size_t pos;
+
+                      for (pos = 0; pos < mp->msgstr_len; ++pos)
+                        if (!mp->msgstr[pos])
+                          ++nplurals;
+                      free ((char *) mp->msgstr);
+                      msgstr = XNMALLOC (nplurals, char);
+                      memset (msgstr, '\0', nplurals);
+                      mp->msgstr = msgstr;
+                      mp->msgstr_len = nplurals;
+                    }
+                  mp->is_fuzzy = false;
+                }
               /* Always keep the header entry non-obsolete.  */
               if ((to_change & SET_OBSOLETE) && !is_header (mp))
                 mp->obsolete = true;

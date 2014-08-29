@@ -1,5 +1,5 @@
 /* Concatenates several translation catalogs.
-   Copyright (C) 2001-2007, 2009-2010 Free Software Foundation, Inc.
+   Copyright (C) 2001-2007, 2009-2012 Free Software Foundation, Inc.
    Written by Bruno Haible <haible@clisp.cons.org>, 2001.
 
    This program is free software: you can redistribute it and/or modify
@@ -62,7 +62,7 @@ static const char *to_code;
 /* Long options.  */
 static const struct option long_options[] =
 {
-  { "add-location", no_argument, &line_comment, 1 },
+  { "add-location", optional_argument, NULL, 'n' },
   { "color", optional_argument, NULL, CHAR_MAX + 5 },
   { "directory", required_argument, NULL, 'D' },
   { "escape", no_argument, NULL, 'E' },
@@ -72,7 +72,7 @@ static const struct option long_options[] =
   { "indent", no_argument, NULL, 'i' },
   { "lang", required_argument, NULL, CHAR_MAX + 7 },
   { "no-escape", no_argument, NULL, 'e' },
-  { "no-location", no_argument, &line_comment, 0 },
+  { "no-location", no_argument, NULL, CHAR_MAX + 8 },
   { "no-wrap", no_argument, NULL, CHAR_MAX + 2 },
   { "output-file", required_argument, NULL, 'o' },
   { "properties-input", no_argument, NULL, 'P' },
@@ -202,7 +202,8 @@ main (int argc, char **argv)
         break;
 
       case 'n':
-        line_comment = 1;
+        if (handle_filepos_comment_option (optarg))
+          usage (EXIT_FAILURE);
         break;
 
       case 'o':
@@ -276,6 +277,10 @@ main (int argc, char **argv)
         catalogname = optarg;
         break;
 
+      case CHAR_MAX + 8: /* --no-location */
+        message_print_style_filepos (filepos_comment_none);
+        break;
+
       default:
         usage (EXIT_FAILURE);
         /* NOTREACHED */
@@ -307,10 +312,6 @@ There is NO WARRANTY, to the extent permitted by law.\n\
     }
 
   /* Verify selected options.  */
-  if (!line_comment && sort_by_filepos)
-    error (EXIT_FAILURE, 0, _("%s and %s are mutually exclusive"),
-           "--no-location", "--sort-by-file");
-
   if (sort_by_msgid && sort_by_filepos)
     error (EXIT_FAILURE, 0, _("%s and %s are mutually exclusive"),
            "--sort-output", "--sort-by-file");
@@ -359,7 +360,7 @@ static void
 usage (int status)
 {
   if (status != EXIT_SUCCESS)
-    fprintf (stderr, _("Try `%s --help' for more information.\n"),
+    fprintf (stderr, _("Try '%s --help' for more information.\n"),
              program_name);
   else
     {
@@ -375,9 +376,9 @@ By using the --more-than option, greater commonality may be requested\n\
 before messages are printed.  Conversely, the --less-than option may be\n\
 used to specify less commonality before messages are printed (i.e.\n\
 --less-than=2 will only print the unique messages).  Translations,\n\
-comments and extract comments will be cumulated, except that if --use-first\n\
-is specified, they will be taken from the first PO file to define them.\n\
-File positions from all PO files will be cumulated.\n\
+comments, extracted comments, and file positions will be cumulated, except\n\
+that if --use-first is specified, they will be taken from the first PO file\n\
+to define them.\n\
 "));
       printf ("\n");
       printf (_("\

@@ -1,5 +1,5 @@
 ## Makefile for the gettext-tools/src subdirectory of GNU gettext
-## Copyright (C) 1995-1998, 2000-2010 Free Software Foundation, Inc.
+## Copyright (C) 1995-1998, 2000-2011 Free Software Foundation, Inc.
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 
 ## Process this file with automake to produce Makefile.in.
 
-AUTOMAKE_OPTIONS = 1.5 gnits no-dependencies
+AUTOMAKE_OPTIONS = 1.5 gnits no-dependencies subdir-objects
 EXTRA_DIST =
 MOSTLYCLEANFILES = core *.stackdump
 CLEANFILES =
@@ -48,10 +48,12 @@ read-csharp.h write-csharp.h \
 read-resources.h write-resources.h \
 read-tcl.h write-tcl.h \
 write-qt.h \
+read-desktop.h write-desktop.h \
 po-time.h plural-table.h lang-table.h format.h filters.h \
 xgettext.h x-c.h x-po.h x-sh.h x-python.h x-lisp.h x-elisp.h x-librep.h \
 x-scheme.h x-smalltalk.h x-java.h x-properties.h x-csharp.h x-awk.h x-ycp.h \
-x-tcl.h x-perl.h x-php.h x-stringtable.h x-rst.h x-glade.h
+x-tcl.h x-perl.h x-php.h x-stringtable.h x-rst.h x-glade.h x-lua.h \
+x-javascript.h x-vala.h x-gsettings.h x-desktop.h libexpat-compat.h
 
 EXTRA_DIST += FILES project-id ChangeLog.0
 
@@ -112,12 +114,33 @@ FORMAT_SOURCE = format.c
 else
 FORMAT_SOURCE = ../woe32dll/c++format.cc
 endif
-FORMAT_SOURCE += format-invalid.h \
-format-c.c format-sh.c format-python.c format-lisp.c format-elisp.c \
-format-librep.c format-scheme.c format-java.c format-csharp.c format-awk.c \
-format-pascal.c format-ycp.c format-tcl.c format-perl.c format-perl-brace.c \
-format-php.c format-gcc-internal.c format-gfc-internal.c \
-format-qt.c format-qt-plural.c format-kde.c format-boost.c
+FORMAT_SOURCE += \
+  format-invalid.h \
+  format-c.c format-c-parse.h \
+  format-sh.c \
+  format-python.c \
+  format-python-brace.c \
+  format-lisp.c \
+  format-elisp.c \
+  format-librep.c \
+  format-scheme.c \
+  format-java.c \
+  format-csharp.c \
+  format-awk.c \
+  format-pascal.c \
+  format-ycp.c \
+  format-tcl.c \
+  format-perl.c \
+  format-perl-brace.c \
+  format-php.c \
+  format-gcc-internal.c \
+  format-gfc-internal.c \
+  format-qt.c \
+  format-qt-plural.c \
+  format-kde.c \
+  format-boost.c \
+  format-lua.c \
+  format-javascript.c
 
 # libgettextsrc contains all code that is needed by at least two programs.
 libgettextsrc_la_SOURCES = \
@@ -126,7 +149,8 @@ color.c write-catalog.c write-properties.c write-stringtable.c write-po.c \
 msgl-ascii.c msgl-iconv.c msgl-equal.c msgl-cat.c msgl-header.c msgl-english.c \
 msgl-check.c file-list.c msgl-charset.c po-time.c plural-exp.c plural-eval.c \
 plural-table.c \
-$(FORMAT_SOURCE)
+$(FORMAT_SOURCE) \
+read-desktop.c
 
 # msggrep needs pattern matching.
 LIBGREP = ../libgrep/libgrep.a
@@ -137,7 +161,7 @@ msgcmp_SOURCES += msgl-fsearch.c
 msgfmt_SOURCES = msgfmt.c
 msgfmt_SOURCES += \
   write-mo.c write-java.c write-csharp.c write-resources.c write-tcl.c \
-  write-qt.c ../../gettext-runtime/intl/hash-string.c
+  write-qt.c write-desktop.c ../../gettext-runtime/intl/hash-string.c
 if !WOE32DLL
 msgmerge_SOURCES = msgmerge.c
 else
@@ -155,7 +179,9 @@ endif
 xgettext_SOURCES += \
   x-c.c x-po.c x-sh.c x-python.c x-lisp.c x-elisp.c x-librep.c x-scheme.c \
   x-smalltalk.c x-java.c x-csharp.c x-awk.c x-ycp.c x-tcl.c x-perl.c x-php.c \
-  x-rst.c x-glade.c
+  x-rst.c x-glade.c x-lua.c x-javascript.c x-vala.c x-gsettings.c \
+  libexpat-compat.c \
+  x-desktop.c
 if !WOE32DLL
 msgattrib_SOURCES = msgattrib.c
 else
@@ -188,6 +214,7 @@ else
 msgfilter_SOURCES = ../woe32dll/c++msgfilter.cc
 endif
 msgfilter_SOURCES += filter-sr-latin.c
+msgfilter_SOURCES += filter-quote.c
 if !WOE32DLL
 msggrep_SOURCES = msggrep.c
 else
@@ -220,12 +247,15 @@ urlget_SOURCES = urlget.c
 # use iconv().
 libgettextsrc_la_LDFLAGS = \
   -release @VERSION@ \
-  ../gnulib-lib/libgettextlib.la $(LTLIBUNISTRING) @LTLIBINTL@ @LTLIBICONV@ -lc @LTNOUNDEF@
+  ../gnulib-lib/libgettextlib.la $(LTLIBUNISTRING) @LTLIBINTL@ @LTLIBICONV@ -lc -no-undefined
+
+libgettextsrc_la_CPPFLAGS = $(AM_CPPFLAGS)
 
 # Tell the mingw or Cygwin linker which symbols to export.
 if WOE32DLL
 libgettextsrc_la_SOURCES += ../woe32dll/gettextsrc-exports.c
 libgettextsrc_la_LDFLAGS += -Wl,--export-all-symbols
+libgettextsrc_la_CPPFLAGS += $(GETTEXTLIB_EXPORTS_FLAGS)
 endif
 
 # No need to install libgettextsrc.a, except on AIX.
@@ -248,7 +278,7 @@ msgcmp_LDADD = libgettextsrc.la @INTL_MACOSX_LIBS@ @MSGMERGE_LIBM@ $(WOE32_LDADD
 msgfmt_LDADD = libgettextsrc.la @INTL_MACOSX_LIBS@ $(WOE32_LDADD)
 msgmerge_LDADD = libgettextsrc.la @INTL_MACOSX_LIBS@ @MSGMERGE_LIBM@ $(WOE32_LDADD) $(OPENMP_CFLAGS)
 msgunfmt_LDADD = libgettextsrc.la @INTL_MACOSX_LIBS@ $(WOE32_LDADD)
-xgettext_LDADD = libgettextsrc.la @INTL_MACOSX_LIBS@ @LTLIBEXPAT@ $(WOE32_LDADD)
+xgettext_LDADD = libgettextsrc.la @INTL_MACOSX_LIBS@ @LTLIBEXPAT@ @LTLIBICONV@ $(WOE32_LDADD)
 msgattrib_LDADD = libgettextsrc.la @INTL_MACOSX_LIBS@ $(WOE32_LDADD)
 msgcat_LDADD = libgettextsrc.la @INTL_MACOSX_LIBS@ $(WOE32_LDADD)
 msgcomm_LDADD = libgettextsrc.la @INTL_MACOSX_LIBS@ $(WOE32_LDADD)
@@ -420,21 +450,24 @@ BUILT_SOURCES = \
 
 po-lex.o po-lex.lo: po-gram-gen2.h
 po-gram-gen2.h: po-gram-gen.h
-	$(SED) -e 's/yy/po_gram_/g' -e 's/extern /extern DLL_VARIABLE /' $(srcdir)/po-gram-gen.h > $@-tmp
+	srcdir=''; \
+	test -f ./po-gram-gen.h || srcdir=$(srcdir)/; \
+	$(SED) -e 's/yy/po_gram_/g' -e 's/extern /extern DLL_VARIABLE /' \
+	  $${srcdir}po-gram-gen.h > $@-tmp && \
 	mv $@-tmp $@
 
 
 # Special rules for installation of auxiliary programs.
 
 install-exec-local:
-	$(mkdir_p) $(DESTDIR)$(pkglibdir)
+	$(MKDIR_P) $(DESTDIR)$(pkglibdir)
 	$(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) hostname$(EXEEXT) $(DESTDIR)$(pkglibdir)/hostname$(EXEEXT)
 	$(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) urlget$(EXEEXT) $(DESTDIR)$(pkglibdir)/urlget$(EXEEXT)
 	$(INSTALL_SCRIPT) user-email $(DESTDIR)$(pkglibdir)/user-email
 	$(INSTALL_SCRIPT) $(srcdir)/project-id $(DESTDIR)$(pkglibdir)/project-id
 
 installdirs-local:
-	$(mkdir_p) $(DESTDIR)$(pkglibdir)
+	$(MKDIR_P) $(DESTDIR)$(pkglibdir)
 
 uninstall-local:
 	$(RM) $(DESTDIR)$(pkglibdir)/hostname$(EXEEXT)
@@ -485,7 +518,7 @@ CLEANFILES += gnu.gettext.DumpResource$(EXEEXT) gnu.gettext.GetURL$(EXEEXT) \
 
 install-exec-local: install-exec-java-@BUILDJAVAEXE@
 install-exec-java-yes: all-java-yes
-	$(mkdir_p) $(DESTDIR)$(pkglibdir)
+	$(MKDIR_P) $(DESTDIR)$(pkglibdir)
 	$(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) gnu.gettext.DumpResource$(EXEEXT) $(DESTDIR)$(pkglibdir)/gnu.gettext.DumpResource$(EXEEXT)
 	$(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) gnu.gettext.GetURL$(EXEEXT) $(DESTDIR)$(pkglibdir)/gnu.gettext.GetURL$(EXEEXT)
 install-exec-java-no:
@@ -499,10 +532,10 @@ install-data-java-no-no:
 
 installdirs-local: installdirs-java-@BUILDJAVAEXE@
 installdirs-java-yes:
-	$(mkdir_p) $(DESTDIR)$(pkglibdir)
+	$(MKDIR_P) $(DESTDIR)$(pkglibdir)
 installdirs-java-no: installdirs-java-no-@BUILDJAVA@
 installdirs-java-no-yes:
-	$(mkdir_p) $(DESTDIR)$(jardir)
+	$(MKDIR_P) $(DESTDIR)$(jardir)
 installdirs-java-no-no:
 
 uninstall-local: uninstall-java-@BUILDJAVAEXE@
@@ -535,15 +568,15 @@ msgunfmt.net.exe: msgunfmt.cs
 
 install-exec-local: install-exec-csharp-@BUILDCSHARP@
 install-exec-csharp-yes: all-csharp-yes
-	$(mkdir_p) $(DESTDIR)$(pkglibdir)
+	$(MKDIR_P) $(DESTDIR)$(pkglibdir)
 	$(INSTALL_DATA) msgfmt.net.exe $(DESTDIR)$(pkglibdir)/msgfmt.net.exe
 	$(INSTALL_DATA) msgunfmt.net.exe $(DESTDIR)$(pkglibdir)/msgunfmt.net.exe
 install-exec-csharp-no:
-	$(mkdir_p) $(DESTDIR)$(pkglibdir)
+	$(MKDIR_P) $(DESTDIR)$(pkglibdir)
 
 installdirs-local: install-csharp
 installdirs-csharp:
-	$(mkdir_p) $(DESTDIR)$(pkglibdir)
+	$(MKDIR_P) $(DESTDIR)$(pkglibdir)
 
 uninstall-local: uninstall-csharp-@BUILDCSHARP@
 uninstall-csharp-yes: all-csharp-yes
@@ -558,12 +591,12 @@ EXTRA_DIST += msgunfmt.tcl
 
 install-data-local: install-tcl
 install-tcl:
-	$(mkdir_p) $(DESTDIR)$(pkgdatadir)
+	$(MKDIR_P) $(DESTDIR)$(pkgdatadir)
 	$(INSTALL_DATA) $(srcdir)/msgunfmt.tcl $(DESTDIR)$(pkgdatadir)/msgunfmt.tcl
 
 installdirs-local: installdirs-tcl
 installdirs-tcl:
-	$(mkdir_p) $(DESTDIR)$(pkgdatadir)
+	$(MKDIR_P) $(DESTDIR)$(pkgdatadir)
 
 uninstall-local: uninstall-tcl
 uninstall-tcl:
