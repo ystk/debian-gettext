@@ -1,4 +1,7 @@
 01-do-not-use-java-in-urlget
-06-msgfmt-default-little-endian
-10-libtool-powerpc-le
+02-msgfmt-default-little-endian
+03-libtool-powerpc-le
+04-xgettext-fix-double-free
+05-msgunfmt-fix-segfault
+06-msgfilter-fix-read-buffer-allocation
 99-config-guess-config-sub

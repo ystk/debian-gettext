@@ -1931,7 +1931,7 @@ X-Debian-version: 0.17-8
 +#   Copyright 1992-2014 Free Software Foundation, Inc.
  
 -timestamp='2002-09-05'
-+timestamp='2014-05-01'
++timestamp='2014-09-26'
  
 -# This file is (in principle) common to ALL GNU software.
 -# The presence of a machine in this file suggests that SOME GNU software
@@ -2099,7 +2099,7 @@ X-Debian-version: 0.17-8
  	-lynx*)
  		os=-lynxos
  		;;
-@@ -226,53 +248,108 @@
+@@ -226,53 +248,112 @@
  	# Some are omitted here because they have special meanings below.
  	1750a | 580 \
  	| a29k \
@@ -2166,6 +2166,7 @@ X-Debian-version: 0.17-8
 +	| powerpc | powerpc64 | powerpc64le | powerpcle \
  	| pyramid \
 -	| sh | sh[1234] | sh3e | sh[34]eb | shbe | shle | sh[1234]le | sh3ele \
++	| riscv32 | riscv64 \
 +	| rl78 | rx \
 +	| score \
 +	| sh | sh[1234] | sh[24]a | sh[24]aeb | sh[23]e | sh[34]eb | sheb | shbe | shle | sh[1234]le | sh3ele \
@@ -2198,6 +2199,9 @@ X-Debian-version: 0.17-8
 +	c6x)
 +		basic_machine=tic6x-unknown
 +		;;
++	leon|leon[3-9])
++		basic_machine=sparc-$basic_machine
++		;;
 +	m6811 | m68hc11 | m6812 | m68hc12 | m68hcs12x | nvptx | picochip)
  		basic_machine=$basic_machine-unknown
  		os=-none
@@ -2225,7 +2229,7 @@ X-Debian-version: 0.17-8
  
  	# We use `pc' rather than `unknown'
  	# because (1) that's what they normally are, and
-@@ -288,54 +365,86 @@
+@@ -288,54 +369,86 @@
  	# Recognize the basic CPU types with company name.
  	580-* \
  	| a29k-* \
@@ -2333,7 +2337,7 @@ X-Debian-version: 0.17-8
  		;;
  	# Recognize the various machine names and aliases which stand
  	# for a CPU type and a company and sometimes even an OS.
-@@ -353,6 +462,9 @@
+@@ -353,6 +466,9 @@
  		basic_machine=a29k-amd
  		os=-udi
  		;;
@@ -2343,7 +2347,7 @@ X-Debian-version: 0.17-8
  	adobe68k)
  		basic_machine=m68010-adobe
  		os=-scout
-@@ -367,6 +479,12 @@
+@@ -367,6 +483,12 @@
  		basic_machine=a29k-none
  		os=-bsd
  		;;
@@ -2356,7 +2360,7 @@ X-Debian-version: 0.17-8
  	amdahl)
  		basic_machine=580-amdahl
  		os=-sysv
-@@ -390,6 +508,10 @@
+@@ -390,6 +512,10 @@
  		basic_machine=m68k-apollo
  		os=-bsd
  		;;
@@ -2367,7 +2371,7 @@ X-Debian-version: 0.17-8
  	aux)
  		basic_machine=m68k-apple
  		os=-aux
-@@ -398,10 +520,35 @@
+@@ -398,10 +524,35 @@
  		basic_machine=ns32k-sequent
  		os=-dynix
  		;;
@@ -2403,7 +2407,7 @@ X-Debian-version: 0.17-8
  	convex-c1)
  		basic_machine=c1-convex
  		os=-bsd
-@@ -426,12 +573,27 @@
+@@ -426,12 +577,27 @@
  		basic_machine=j90-cray
  		os=-unicos
  		;;
@@ -2431,7 +2435,7 @@ X-Debian-version: 0.17-8
  	da30 | da30-*)
  		basic_machine=m68k-da30
  		;;
-@@ -454,6 +616,14 @@
+@@ -454,6 +620,14 @@
  		basic_machine=m88k-motorola
  		os=-sysv3
  		;;
@@ -2446,7 +2450,7 @@ X-Debian-version: 0.17-8
  	dpx20 | dpx20-*)
  		basic_machine=rs6000-bull
  		os=-bosx
-@@ -565,7 +735,6 @@
+@@ -565,7 +739,6 @@
  	i370-ibm* | ibm*)
  		basic_machine=i370-ibm
  		;;
@@ -2454,10 +2458,13 @@ X-Debian-version: 0.17-8
  	i*86v32)
  		basic_machine=`echo $1 | sed -e 's/86.*/86-pc/'`
  		os=-sysv32
-@@ -604,6 +773,14 @@
+@@ -604,6 +777,17 @@
  		basic_machine=m68k-isi
  		os=-sysv
  		;;
++	leon-*|leon[3-9]-*)
++		basic_machine=sparc-`echo $basic_machine | sed 's/-.*//'`
++		;;
 +	m68knommu)
 +		basic_machine=m68k-unknown
 +		os=-linux
@@ -2469,7 +2476,7 @@ X-Debian-version: 0.17-8
  	m88k-omron*)
  		basic_machine=m88k-omron
  		;;
-@@ -615,10 +792,21 @@
+@@ -615,10 +799,21 @@
  		basic_machine=ns32k-utek
  		os=-sysv
  		;;
@@ -2492,7 +2499,7 @@ X-Debian-version: 0.17-8
  	miniframe)
  		basic_machine=m68000-convergent
  		;;
-@@ -632,10 +820,6 @@
+@@ -632,10 +827,6 @@
  	mips3*)
  		basic_machine=`echo $basic_machine | sed -e 's/mips3/mips64/'`-unknown
  		;;
@@ -2503,7 +2510,15 @@ X-Debian-version: 0.17-8
  	monitor)
  		basic_machine=m68k-rom68k
  		os=-coff
-@@ -648,10 +832,21 @@
+@@ -644,14 +835,29 @@
+ 		basic_machine=powerpc-unknown
+ 		os=-morphos
+ 		;;
++	moxiebox)
++		basic_machine=moxie-unknown
++		os=-moxiebox
++		;;
+ 	msdos)
  		basic_machine=i386-pc
  		os=-msdos
  		;;
@@ -2525,7 +2540,7 @@ X-Debian-version: 0.17-8
  	ncr3000)
  		basic_machine=i486-ncr
  		os=-sysv4
-@@ -716,6 +911,12 @@
+@@ -716,6 +922,12 @@
  	np1)
  		basic_machine=np1-gould
  		;;
@@ -2538,7 +2553,7 @@ X-Debian-version: 0.17-8
  	nsr-tandem)
  		basic_machine=nsr-tandem
  		;;
-@@ -723,9 +924,12 @@
+@@ -723,9 +935,12 @@
  		basic_machine=hppa1.1-oki
  		os=-proelf
  		;;
@@ -2553,7 +2568,7 @@ X-Debian-version: 0.17-8
  		;;
  	OSE68000 | ose68000)
  		basic_machine=m68000-ericsson
-@@ -743,6 +947,14 @@
+@@ -743,6 +958,14 @@
  		basic_machine=i860-intel
  		os=-osf
  		;;
@@ -2568,7 +2583,7 @@ X-Debian-version: 0.17-8
  	pbd)
  		basic_machine=sparc-tti
  		;;
-@@ -752,32 +964,45 @@
+@@ -752,32 +975,45 @@
  	pc532 | pc532-*)
  		basic_machine=ns32k-pc532
  		;;
@@ -2618,7 +2633,7 @@ X-Debian-version: 0.17-8
  		;;
  	ppcle | powerpclittle | ppc-le | powerpc-little)
  		basic_machine=powerpcle-unknown
-@@ -802,6 +1027,14 @@
+@@ -802,6 +1038,14 @@
  		basic_machine=i586-unknown
  		os=-pw32
  		;;
@@ -2633,7 +2648,7 @@ X-Debian-version: 0.17-8
  	rom68k)
  		basic_machine=m68k-rom68k
  		os=-coff
-@@ -828,6 +1061,14 @@
+@@ -828,6 +1072,14 @@
  	sb1el)
  		basic_machine=mipsisa64sb1el-unknown
  		;;
@@ -2648,7 +2663,7 @@ X-Debian-version: 0.17-8
  	sequent)
  		basic_machine=i386-sequent
  		;;
-@@ -835,6 +1076,12 @@
+@@ -835,6 +1087,12 @@
  		basic_machine=sh-hitachi
  		os=-hms
  		;;
@@ -2661,7 +2676,7 @@ X-Debian-version: 0.17-8
  	sparclite-wrs | simso-wrs)
  		basic_machine=sparclite-wrs
  		os=-vxworks
-@@ -853,6 +1100,9 @@
+@@ -853,6 +1111,9 @@
  		basic_machine=i860-stratus
  		os=-sysv4
  		;;
@@ -2671,7 +2686,7 @@ X-Debian-version: 0.17-8
  	sun2)
  		basic_machine=m68000-sun
  		;;
-@@ -901,10 +1151,6 @@
+@@ -901,10 +1162,6 @@
  		basic_machine=i386-sequent
  		os=-dynix
  		;;
@@ -2682,7 +2697,7 @@ X-Debian-version: 0.17-8
  	t3e)
  		basic_machine=alphaev5-cray
  		os=-unicos
-@@ -913,13 +1159,9 @@
+@@ -913,13 +1170,9 @@
  		basic_machine=t90-cray
  		os=-unicos
  		;;
@@ -2699,7 +2714,7 @@ X-Debian-version: 0.17-8
  		;;
  	tx39)
  		basic_machine=mipstx39-unknown
-@@ -934,6 +1176,10 @@
+@@ -934,6 +1187,10 @@
  	tower | tower-32)
  		basic_machine=m68k-ncr
  		;;
@@ -2710,7 +2725,7 @@ X-Debian-version: 0.17-8
  	udi29k)
  		basic_machine=a29k-amd
  		os=-udi
-@@ -977,13 +1223,16 @@
+@@ -977,13 +1234,16 @@
  		basic_machine=hppa1.1-winbond
  		os=-proelf
  		;;
@@ -2730,7 +2745,7 @@ X-Debian-version: 0.17-8
  	ymp)
  		basic_machine=ymp-cray
  		os=-unicos
-@@ -992,6 +1241,10 @@
+@@ -992,6 +1252,10 @@
  		basic_machine=z8k-unknown
  		os=-sim
  		;;
@@ -2741,7 +2756,7 @@ X-Debian-version: 0.17-8
  	none)
  		basic_machine=none-none
  		os=-none
-@@ -1011,6 +1264,9 @@
+@@ -1011,6 +1275,9 @@
  	romp)
  		basic_machine=romp-ibm
  		;;
@@ -2751,7 +2766,7 @@ X-Debian-version: 0.17-8
  	rs6000)
  		basic_machine=rs6000-ibm
  		;;
-@@ -1027,13 +1283,10 @@
+@@ -1027,13 +1294,10 @@
  	we32k)
  		basic_machine=we32k-att
  		;;
@@ -2767,7 +2782,7 @@ X-Debian-version: 0.17-8
  		basic_machine=sparc-sun
  		;;
  	cydra)
-@@ -1077,9 +1330,12 @@
+@@ -1077,9 +1341,12 @@
  if [ x"$os" != x"" ]
  then
  case $os in
@@ -2782,7 +2797,7 @@ X-Debian-version: 0.17-8
  	-solaris1 | -solaris1.*)
  		os=`echo $os | sed -e 's|solaris1|sunos4|'`
  		;;
-@@ -1100,24 +1356,31 @@
+@@ -1100,24 +1367,31 @@
  	# Each alternative MUST END IN A *, to match a version number.
  	# -sysv* is not here because it comes later, after sysvr4.
  	-gnu* | -bsd* | -mach* | -minix* | -genix* | -ultrix* | -irix* \
@@ -2812,7 +2827,7 @@ X-Debian-version: 0.17-8
 +	      | -cygwin* | -msys* | -pe* | -psos* | -moss* | -proelf* | -rtems* \
 +	      | -mingw32* | -mingw64* | -linux-gnu* | -linux-android* \
 +	      | -linux-newlib* | -linux-musl* | -linux-uclibc* \
-+	      | -uxpv* | -beos* | -mpeix* | -udk* \
++	      | -uxpv* | -beos* | -mpeix* | -udk* | -moxiebox* \
 +	      | -interix* | -uwin* | -mks* | -rhapsody* | -darwin* | -opened* \
  	      | -openstep* | -oskit* | -conix* | -pw32* | -nonstopux* \
  	      | -storm-chaos* | -tops10* | -tenex* | -tops20* | -its* \
@@ -2824,7 +2839,7 @@ X-Debian-version: 0.17-8
  	# Remember, each alternative MUST END IN *, to match a version number.
  		;;
  	-qnx*)
-@@ -1129,16 +1392,21 @@
+@@ -1129,16 +1403,21 @@
  			;;
  		esac
  		;;
@@ -2848,7 +2863,7 @@ X-Debian-version: 0.17-8
  	-linux*)
  		os=`echo $os | sed -e 's|linux|linux-gnu|'`
  		;;
-@@ -1151,6 +1419,9 @@
+@@ -1151,6 +1430,9 @@
  	-opened*)
  		os=-openedition
  		;;
@@ -2858,7 +2873,7 @@ X-Debian-version: 0.17-8
  	-wince*)
  		os=-wince
  		;;
-@@ -1172,6 +1443,9 @@
+@@ -1172,6 +1454,9 @@
  	-atheos*)
  		os=-atheos
  		;;
@@ -2868,7 +2883,7 @@ X-Debian-version: 0.17-8
  	-386bsd)
  		os=-bsd
  		;;
-@@ -1194,6 +1468,9 @@
+@@ -1194,6 +1479,9 @@
  	-sinix*)
  		os=-sysv4
  		;;
@@ -2878,7 +2893,7 @@ X-Debian-version: 0.17-8
  	-triton*)
  		os=-sysv3
  		;;
-@@ -1224,6 +1501,17 @@
+@@ -1224,6 +1512,17 @@
  	-*mint | -mint[0-9]* | -*MiNT | -MiNT[0-9]*)
  		os=-mint
  		;;
@@ -2896,7 +2911,7 @@ X-Debian-version: 0.17-8
  	-none)
  		;;
  	*)
-@@ -1246,6 +1534,12 @@
+@@ -1246,6 +1545,12 @@
  # system, and we'll never get to this point.
  
  case $basic_machine in
@@ -2909,7 +2924,7 @@ X-Debian-version: 0.17-8
  	*-acorn)
  		os=-riscix1.2
  		;;
-@@ -1255,6 +1549,24 @@
+@@ -1255,6 +1560,24 @@
  	arm*-semi)
  		os=-aout
  		;;
@@ -2934,7 +2949,7 @@ X-Debian-version: 0.17-8
  	# This must come before the *-dec entry.
  	pdp10-*)
  		os=-tops20
-@@ -1273,13 +1585,13 @@
+@@ -1273,13 +1596,13 @@
  		;;
  	m68000-sun)
  		os=-sunos3
@@ -2951,7 +2966,7 @@ X-Debian-version: 0.17-8
  	mips*-cisco)
  		os=-elf
  		;;
-@@ -1298,9 +1610,15 @@
+@@ -1298,9 +1621,15 @@
  	*-be)
  		os=-beos
  		;;
@@ -2967,7 +2982,7 @@ X-Debian-version: 0.17-8
  	*-wec)
  		os=-proelf
  		;;
-@@ -1403,7 +1721,7 @@
+@@ -1403,7 +1732,7 @@
  			-sunos*)
  				vendor=sun
  				;;
@@ -2976,7 +2991,7 @@ X-Debian-version: 0.17-8
  				vendor=ibm
  				;;
  			-beos*)
-@@ -1433,9 +1751,15 @@
+@@ -1433,9 +1762,15 @@
  			-mvs* | -opened*)
  				vendor=ibm
  				;;
@@ -2992,7 +3007,7 @@ X-Debian-version: 0.17-8
  			-vxsim* | -vxworks* | -windiss*)
  				vendor=wrs
  				;;
-@@ -1460,7 +1784,7 @@
+@@ -1460,7 +1795,7 @@
  esac
  
  echo $basic_machine$os

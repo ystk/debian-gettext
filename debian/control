@@ -2,7 +2,7 @@ Source: gettext
 Section: devel
 Priority: optional
 Maintainer: Santiago Vila <sanvila@debian.org>
-Standards-Version: 3.9.5
+Standards-Version: 3.9.6
 Build-Depends: libexpat1-dev, fastjar, default-jdk, file, libncurses5-dev, libxml2-dev, libglib2.0-dev, libcroco3-dev, xz-utils, libunistring-dev
 Homepage: http://www.gnu.org/software/gettext/
 
@@ -10,6 +10,7 @@ Package: gettext-base
 Section: utils
 Priority: standard
 Architecture: any
+Multi-Arch: foreign
 Depends: ${shlibs:Depends}, libasprintf0c2 (>= 0.18.1.1-6)
 Description: GNU Internationalization utilities for the base system
  This package includes the gettext and ngettext programs which allow

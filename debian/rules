@@ -42,16 +42,17 @@ build:
 	cd debian && $(CC) glibc-test.c
 	debian/a.out
 	sh debian/mk-touch || true
-	touch -d "2014-04-22 09:40:04 UTC" m4/libtool.m4
-	touch -d "2014-07-14 07:30:12 UTC" gettext-runtime/configure
-	touch -d "2014-07-14 07:30:07 UTC" gettext-runtime/libasprintf/configure
-	touch -d "2014-07-14 07:30:23 UTC" gettext-tools/configure
+	touch -d "2014-08-27 02:44:02 UTC" m4/libtool.m4
+	touch -d "2014-10-16 06:01:24 UTC" gettext-runtime/configure
+	touch -d "2014-10-16 06:01:19 UTC" gettext-runtime/libasprintf/configure
+	touch -d "2014-10-16 06:01:34 UTC" gettext-tools/configure
 	touch -d "2014-06-10 06:30:01 UTC" gettext-tools/src/msgfmt.c
 	./configure --prefix=/usr --enable-threads $(CSHARP) \
 		--disable-native-java CC="$(CC)" CFLAGS="$(CFLAGS)" \
 		JAVAC=/usr/lib/jvm/default-java/bin/javac \
-		CPPFLAGS="$(CPPFLAGS) -I/usr/include/libxml2" \
-		CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)"
+		CPPFLAGS="$(CPPFLAGS)" \
+		CXXFLAGS="$(CXXFLAGS)" \
+		LDFLAGS="$(LDFLAGS)"
 	$(MAKE)
 	$(MAKE) install DESTDIR=`pwd`/debian/tmp \
 		INSTALL_PROGRAM="$(INSTALL_PROGRAM)" \

@@ -1,3 +1,43 @@
+gettext (0.19.3-2) unstable; urgency=low
+
+  * xgettext: Fix double-free in singular/plural argument extraction.
+    See http://lists.gnu.org/archive/html/bug-gettext/2014-10/msg00028.html
+    Patch extracted from upstream commits 8137d2b and 84044b5.
+  * msgunfmt: Fix segfault on certain (slightly corrupted) .mo files.
+    Patch extracted from upstream commit abf93d1. Closes: #769901.
+  * msgfilter: Fix read buffer allocation for empty input.
+    See http://lists.gnu.org/archive/html/bug-gettext/2014-11/msg00008.html
+    Patch extracted from upstream commit 06e206f.
+
+ -- Santiago Vila <sanvila@debian.org>  Sun, 30 Nov 2014 12:10:20 +0100
+
+gettext (0.19.3-1) unstable; urgency=low
+
+  * New upstream release.
+  * Updated /etc/emacs/site-start.d/50gettext.el to avoid error on .po
+    inside a tar file. Thanks a lot to Kevin Ryde. Closes: #628644.
+  * Report error on incomplete multibyte sequence. Closes: #763820.
+  * Dropped infinite recursion patch, renumber remaining patches.
+  * Dropped -I/usr/include/libxml2 hack in configure call introduced
+    in version 0.17-7 as it's no longer needed.
+
+ -- Santiago Vila <sanvila@debian.org>  Thu, 23 Oct 2014 15:35:14 +0200
+
+gettext (0.19.2-3) unstable; urgency=medium
+
+  * Applied patch by Eric Blake to autopoint.in and gettextize.in
+    fixing an infinite recursion in m4 that prevented util-linux
+    to be build. Closes: #764580.
+  * Updated config.guess and config.sub.
+
+ -- Santiago Vila <sanvila@debian.org>  Fri, 10 Oct 2014 00:24:52 +0200
+
+gettext (0.19.2-2) unstable; urgency=medium
+
+  * Added "Multi-Arch: foreign" to gettext-base. Closes: #760410.
+
+ -- Santiago Vila <sanvila@debian.org>  Wed, 03 Sep 2014 22:08:00 +0200
+
 gettext (0.19.2-1) unstable; urgency=low
 
   * New upstream release. Closes: #755221.

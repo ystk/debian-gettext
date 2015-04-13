@@ -7,7 +7,7 @@ and is currently maintained by Santiago Vila <sanvila@debian.org>.
 
 This release has been built using the sources from:
 
-http://ftp.gnu.org/pub/gnu/gettext/gettext-0.19.2.tar.xz
+http://ftp.gnu.org/pub/gnu/gettext/gettext-0.19.3.tar.xz
 
 The changes were fairly minimal, and consisted solely of adding
 various debian/* files to the distribution.
